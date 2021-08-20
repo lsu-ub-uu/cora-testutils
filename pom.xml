@@ -8,7 +8,6 @@
 		<version>1.4.1</version>
 	</parent>
 
-	<!-- <groupId>se.uu.ub.cora.test</groupId> -->
 	<artifactId>testutils</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>testutils</name>
