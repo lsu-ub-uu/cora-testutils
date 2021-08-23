@@ -23,7 +23,9 @@
 		<dependency>
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
-			<version>${testng.version}</version>
+<!-- 			using 7.3.0 as assertSame is broken in 7.4.0 see bug: -->
+<!-- 			https://github.com/cbeust/testng/issues/2486 -->
+			<version>7.3.0</version>
 		</dependency>
 	</dependencies>
 </project>

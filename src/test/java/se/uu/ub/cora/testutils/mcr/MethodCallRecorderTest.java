@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 public class MethodCallRecorderTest {
 
+	private static final long A_LONG_TO_BIG_FOR_INT = 3147483647L;
 	MethodCallRecorder MCR;
 	private Object objectParameter = new Object();
 	private MethodCallRecorderForTest MCRforTest;
@@ -53,6 +54,10 @@ public class MethodCallRecorderTest {
 
 	private void addCall2() {
 		MCR.addCall("param2", 2, "param3", objectParameter);
+	}
+
+	private void addCall3() {
+		MCR.addCall("param1", 1L, "param2", 3147483647L);
 	}
 
 	@Test
@@ -279,10 +284,53 @@ public class MethodCallRecorderTest {
 		MCR.assertParameter("addCall1", 0, "param2", 2);
 	}
 
-	public void testAssertParameterEqualIntValue() throws Exception {
+	@Test
+	public void testAssertParameterEqualValues() throws Exception {
 		addCall1();
+		addCall2();
+		addCall3();
 
 		MCR.assertParameter("addCall1", 0, "param1", 1);
+		assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject();
+		MCR.assertParameter("addCall2", 0, "param3", objectParameter);
+		MCR.assertParameter("addCall3", 0, "param1", 1L);
+	}
+
+	private void assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject() {
+		MCR.assertParameter("addCall1", 0, "param1", new Integer(1));
+		MCR.assertParameter("addCall3", 0, "param1", new Long(1));
+		MCR.assertParameter("addCall1", 0, "param2", new String("2"));
+		MCR.assertParameter("addCall3", 0, "param2", new Long(A_LONG_TO_BIG_FOR_INT));
+	}
+
+	// @Test
+	// public void testName() throws Exception {
+	// Object o1 = 1;
+	// // Object o2 = Integer.valueOf(1);
+	// Object o2 = new Integer(1);
+	//
+	// assertSame(o1, o2, "");
+	// }
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[45\\] but found \\[1\\]")
+	public void testAssertParameterDifferentint() throws Exception {
+		addCall1();
+		MCR.assertParameter("addCall1", 0, "param1", 45);
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[45\\] but found \\[1\\]")
+	public void testAssertParameterDifferentLong() throws Exception {
+		addCall3();
+		MCR.assertParameter("addCall3", 0, "param1", 45L);
+	}
+
+	@Test(expectedExceptions = AssertionError.class)
+	public void testAssertParameterDifferentObject() throws Exception {
+		addCall2();
+
+		MCR.assertParameter("addCall2", 0, "param3", new Object());
 	}
 
 	@Test
@@ -311,29 +359,21 @@ public class MethodCallRecorderTest {
 		private List<Object> actualValue = new ArrayList<>();;
 
 		@Override
-		void assertParameter(Object expectedValue, Object actualValue) {
+		void assertValuesAreEqual(Object expectedValue, Object actualValue) {
 			this.expectedValue.add(expectedValue);
 			this.actualValue.add(actualValue);
 			assertParameterCallsCounter++;
 		}
 	}
 
-	@Test
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "Too many values to compare for \\(methodName: addCallForTest, callNumber: 0\\)")
 	public void testMakeSureAssertParametersDoesNotCallsAssertParameterMoreTimesThanEnteredParams()
 			throws Exception {
-		addCallForTest();
-		try {
-			MCRforTest.assertParameters("addCallForTest", 0, "value1", "value2", "value3",
-					"value4");
-		} catch (AssertionError error) {
-			assertEquals(MCRforTest.assertParameterCallsCounter, 3);
-			assertEquals(MCRforTest.expectedValue.get(0), "value1");
-			assertEquals(MCRforTest.actualValue.get(0), "value1");
-			assertEquals(MCRforTest.expectedValue.get(1), "value2");
-			assertEquals(MCRforTest.actualValue.get(1), "value2");
-			assertEquals(MCRforTest.expectedValue.get(2), "value3");
-			assertEquals(MCRforTest.actualValue.get(2), "value3");
-		}
+		addCall1();
+
+		MCR.assertParameters("addCallForTest", 0, "value1", "value2", "value3", "value4");
+
 	}
 
 	@Test
@@ -353,7 +393,6 @@ public class MethodCallRecorderTest {
 		addCall2();
 
 		MCR.assertParameters("addCall1", 0, 1, "3");
-
 	}
 
 	@Test
@@ -372,6 +411,42 @@ public class MethodCallRecorderTest {
 		MCR.addReturned(valueToReturn);
 
 		assertEquals(MCR.getReturnValue("someMethod", 0), "someValue");
+
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "CallNumber not found for \\(methodName: someMethod, callNumber: 0\\)")
+	public void testAddReturnCallNumberNotFound() throws Exception {
+		String valueToReturn = "someValue";
+		MCR.addReturned(valueToReturn);
+
+		assertEquals(MCR.getReturnValue("testAddReturnCallNumberNotFound", 10), valueToReturn);
+
+	}
+
+	@Test
+	public void testAssertReturnPosiveAssertion() throws Exception {
+		String valueToReturn = "someValue";
+		MCR.addReturned(valueToReturn);
+
+		MCR.assertReturn("testAssertReturnPosiveAssertion", 0, valueToReturn);
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[someOtherValue\\] but found \\[someValue\\]")
+	public void testAssertReturnNegativeAssertion() throws Exception {
+		MCR.addReturned("someValue");
+
+		MCR.assertReturn("testAssertReturnNegativeAssertion", 0, "someOtherValue");
+	}
+
+	@Test
+	public void testAddReturnedSeveralCalls() throws Exception {
+		MCR.addReturned("someValue1");
+		MCR.addReturned("someValue2");
+
+		MCR.assertReturn("testAddReturnedSeveralCalls", 0, "someValue1");
+		MCR.assertReturn("testAddReturnedSeveralCalls", 1, "someValue2");
 
 	}
 }

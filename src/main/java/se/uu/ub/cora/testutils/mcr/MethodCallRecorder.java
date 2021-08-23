@@ -54,12 +54,16 @@ public class MethodCallRecorder {
 		String methodName = getMethodNameFromCall();
 		List<Map<String, Object>> list = possiblyAddMethodName(methodName);
 		Map<String, Object> parameter = new LinkedHashMap<>();
+		recordParameterNameAndValue(parameter, parameters);
+		list.add(parameter);
+	}
+
+	private void recordParameterNameAndValue(Map<String, Object> parameter, Object... parameters) {
 		int position = 0;
 		while (position < parameters.length) {
 			parameter.put((String) parameters[position], parameters[position + 1]);
 			position = position + 2;
 		}
-		list.add(parameter);
 	}
 
 	private String getMethodNameFromCall() {
@@ -86,16 +90,15 @@ public class MethodCallRecorder {
 	 *            The value returned from the method
 	 */
 	public void addReturned(Object returnedValue) {
-		String methodName2 = getMethodNameFromCall();
-		List<Object> list = possiblyAddMethodNameToReturnedValues(methodName2);
+		String methodName = getMethodNameFromCall();
+		List<Object> list = possiblyAddMethodNameToReturnedValues(methodName);
 		list.add(returnedValue);
 	}
 
 	private List<Object> possiblyAddMethodNameToReturnedValues(String methodName) {
-		if (!returnedValues.containsKey(methodName)) {
-			returnedValues.put(methodName, new ArrayList<>());
-		}
-		return returnedValues.get(methodName);
+		return returnedValues.computeIfAbsent(methodName, key -> {
+			return new ArrayList<>();
+		});
 	}
 
 	/**
@@ -108,12 +111,16 @@ public class MethodCallRecorder {
 	 * @return An Object with the recorded return value
 	 */
 	public Object getReturnValue(String methodName, int callNumber) {
+
 		try {
 			List<Object> returnedValuesForMethod = returnedValues.get(methodName);
 			return returnedValuesForMethod.get(callNumber);
 		} catch (NullPointerException ex) {
 			throw new RuntimeException(
 					"MethodName not found for (methodName: someMethod, callNumber: 0)");
+		} catch (IndexOutOfBoundsException ex) {
+			throw new RuntimeException(
+					"CallNumber not found for (methodName: someMethod, callNumber: 0)");
 		}
 	}
 
@@ -131,12 +138,12 @@ public class MethodCallRecorder {
 	 * @param expectedValue
 	 *            An Object with the expected parameter value
 	 */
-	// public void assertReturn(String methodName, int callNumber, Object expectedValue) {
-	//
-	// Object value = getReturnValue(methodName, callNumber);
-	//
-	// assertParameter(expectedValue, value);
-	// }
+	public void assertReturn(String methodName, int callNumber, Object expectedValue) {
+
+		Object value = getReturnValue(methodName, callNumber);
+
+		assertValuesAreEqual(expectedValue, value);
+	}
 
 	/**
 	 * getNumberOfCallsToMethod is used to get the number of calls made to a method
@@ -170,30 +177,43 @@ public class MethodCallRecorder {
 	public Object getValueForMethodNameAndCallNumberAndParameterName(String methodName,
 			int callNumber, String parameterName) {
 
-		// Original solution
-		// List<Map<String, Object>> methodCalls = calledMethods.get(methodName);
-		// Map<String, Object> parameters = methodCalls.get(callNumber);
-		// return parameters.get(parameterName);
+		String messageEnd = createMessageEnd(methodName, callNumber, parameterName);
 
-		// Another solution
-		String errorMessageStartsWith = "MethodName";
-		if (calledMethods.containsKey(methodName)) {
-			List<Map<String, Object>> methodCalls = calledMethods.get(methodName);
+		throwErrorIfMethodNameNotRecorded(methodName, messageEnd);
+		List<Map<String, Object>> methodCalls = calledMethods.get(methodName);
 
-			errorMessageStartsWith = "CallNumber";
-			if (methodCalls.size() > callNumber) {
-				Map<String, Object> parameters = methodCalls.get(callNumber);
+		throwErrorIfCallNumberNotRecorded(callNumber, messageEnd, methodCalls);
+		Map<String, Object> parameters = methodCalls.get(callNumber);
 
-				errorMessageStartsWith = "ParameterName";
-				if (parameters.containsKey(parameterName)) {
-					return parameters.get(parameterName);
-				}
-			}
+		throwErrorIfParameterNameNotRecorded(parameterName, messageEnd, parameters);
+
+		return parameters.get(parameterName);
+
+	}
+
+	private String createMessageEnd(String methodName, int callNumber, String parameterName) {
+		return " not found for (methodName: " + methodName + ", callNumber: " + callNumber + ""
+				+ " and parameterName: " + parameterName + ")";
+	}
+
+	private void throwErrorIfParameterNameNotRecorded(String parameterName, String messageEnd,
+			Map<String, Object> parameters) {
+		if (!parameters.containsKey(parameterName)) {
+			throw new RuntimeException("ParameterName" + messageEnd);
 		}
-		throw new RuntimeException(errorMessageStartsWith + " not found for (methodName: "
-				+ methodName + ", callNumber: " + callNumber + "" + " and parameterName: "
-				+ parameterName + ")");
+	}
 
+	private void throwErrorIfCallNumberNotRecorded(int callNumber, String messageEnd,
+			List<Map<String, Object>> methodCalls) {
+		if (methodCalls.size() < callNumber) {
+			throw new RuntimeException("CallNumber" + messageEnd);
+		}
+	}
+
+	private void throwErrorIfMethodNameNotRecorded(String methodName, String messageEnd) {
+		if (!calledMethods.containsKey(methodName)) {
+			throw new RuntimeException("MethodName" + messageEnd);
+		}
 	}
 
 	/**
@@ -246,23 +266,34 @@ public class MethodCallRecorder {
 	 *            the method.
 	 */
 	public void assertParameters(String methodName, int callNumber, Object... expectedValues) {
-		try {
-			Object[] inParameters = getInParametersAsArray(methodName, callNumber);
+		Object[] inParameters = getInParametersAsArray(methodName, callNumber);
 
-			int position = 0;
-			for (Object expectedValue : expectedValues) {
-				Object value = inParameters[position];
-				assertParameter(expectedValue, value);
-				position++;
-			}
-		} catch (Exception e) {
-			assertTrue(false);
+		try {
+			assertAllParameters(inParameters, expectedValues);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			String message = "Too many values to compare for (methodName: " + methodName
+					+ ", callNumber: " + callNumber + ")";
+			throw new RuntimeException(message);
 		}
 	}
 
-	void assertParameter(Object expectedValue, Object actualValue) {
+	private void assertAllParameters(Object[] inParameters, Object... expectedValues) {
+		int position = 0;
+		for (Object expectedValue : expectedValues) {
+			assertParameterForPosition(inParameters, position, expectedValue);
+			position++;
+		}
+	}
+
+	private void assertParameterForPosition(Object[] inParameters, int position,
+			Object expectedValue) {
+		Object value = inParameters[position];
+		assertValuesAreEqual(expectedValue, value);
+	}
+
+	void assertValuesAreEqual(Object expectedValue, Object actualValue) {
 		throwExcpetionWhenDifferentTypes(expectedValue, actualValue);
-		if (isStringOrInt(expectedValue)) {
+		if (isStringOrNumber(expectedValue)) {
 			assertEquals(actualValue, expectedValue);
 		} else {
 			assertSame(actualValue, expectedValue);
@@ -278,7 +309,22 @@ public class MethodCallRecorder {
 	}
 
 	private boolean differentTypes(Object objectA, Object objectB) {
-		return !objectA.getClass().equals(objectB.getClass());
+		Class<? extends Object> classA = objectA.getClass();
+		Class<? extends Object> classB = objectB.getClass();
+		return !classA.equals(classB);
+	}
+
+	private boolean isStringOrNumber(Object assertParameter) {
+		return assertParameter instanceof String || isInt(assertParameter)
+				|| isLong(assertParameter);
+	}
+
+	private boolean isInt(Object object) {
+		return object instanceof Integer;
+	}
+
+	private boolean isLong(Object object) {
+		return object instanceof Long;
 	}
 
 	/**
@@ -299,7 +345,7 @@ public class MethodCallRecorder {
 		Object value = getValueForMethodNameAndCallNumberAndParameterName(methodName, callNumber,
 				parameterName);
 
-		assertParameter(expectedValue, value);
+		assertValuesAreEqual(expectedValue, value);
 	}
 
 	/**
@@ -311,28 +357,11 @@ public class MethodCallRecorder {
 	 *            Expected number of times that the method has been called.
 	 */
 	public void assertNumberOfCallsToMethod(String methodName, int calledNumberOfTimes) {
-		// coraAssert.assertEquals(getNumberOfCallsToMethod(methodName), calledNumberOfTimes);
 		assertEquals(getNumberOfCallsToMethod(methodName), calledNumberOfTimes);
 	}
 
 	private Object[] getInParametersAsArray(String methodName, int callNumber) {
-		Object[] inParameters = getParametersForMethodAndCallNumber(methodName, callNumber).values()
-				.toArray();
-		return inParameters;
-	}
-
-	private boolean isStringOrInt(Object assertParameter) {
-		return assertParameter instanceof String || isInt(assertParameter);
-	}
-
-	private boolean isInt(Object object) {
-		try {
-			Integer.parseInt((String) object);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-
+		return getParametersForMethodAndCallNumber(methodName, callNumber).values().toArray();
 	}
 
 	/**
