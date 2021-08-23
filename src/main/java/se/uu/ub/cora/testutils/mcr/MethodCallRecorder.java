@@ -1,6 +1,9 @@
 package se.uu.ub.cora.testutils.mcr;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +35,7 @@ import java.util.Map;
  */
 public class MethodCallRecorder {
 	private Map<String, List<Map<String, Object>>> calledMethods = new HashMap<>();
-	// private Map<String, List<Object>> returnedValues = new HashMap<>();
+	private Map<String, List<Object>> returnedValues = new HashMap<>();
 
 	/**
 	 * addCall is expected to be used by spies and similar test helper classes to record calls made
@@ -82,18 +85,18 @@ public class MethodCallRecorder {
 	 * @param returnedValue
 	 *            The value returned from the method
 	 */
-	// public void addReturned(Object returnedValue) {
-	// String methodName2 = getMethodNameFromCall();
-	// List<Object> list = possiblyAddMethodNameToReturnedValues(methodName2);
-	// list.add(returnedValue);
-	// }
-	//
-	// private List<Object> possiblyAddMethodNameToReturnedValues(String methodName) {
-	// if (!returnedValues.containsKey(methodName)) {
-	// returnedValues.put(methodName, new ArrayList<>());
-	// }
-	// return returnedValues.get(methodName);
-	// }
+	public void addReturned(Object returnedValue) {
+		String methodName2 = getMethodNameFromCall();
+		List<Object> list = possiblyAddMethodNameToReturnedValues(methodName2);
+		list.add(returnedValue);
+	}
+
+	private List<Object> possiblyAddMethodNameToReturnedValues(String methodName) {
+		if (!returnedValues.containsKey(methodName)) {
+			returnedValues.put(methodName, new ArrayList<>());
+		}
+		return returnedValues.get(methodName);
+	}
 
 	/**
 	 * getReturnValue is used to get the return value for a specific method call and call number
@@ -104,10 +107,15 @@ public class MethodCallRecorder {
 	 *            An int with the order number of the call, starting on 0
 	 * @return An Object with the recorded return value
 	 */
-	// public Object getReturnValue(String methodName, int callNumber) {
-	// List<Object> returnedValuesForMethod = returnedValues.get(methodName);
-	// return returnedValuesForMethod.get(callNumber);
-	// }
+	public Object getReturnValue(String methodName, int callNumber) {
+		try {
+			List<Object> returnedValuesForMethod = returnedValues.get(methodName);
+			return returnedValuesForMethod.get(callNumber);
+		} catch (NullPointerException ex) {
+			throw new RuntimeException(
+					"MethodName not found for (methodName: someMethod, callNumber: 0)");
+		}
+	}
 
 	/**
 	 * assertReturn is used to validate calls to spies and similar test helpers.
@@ -168,19 +176,23 @@ public class MethodCallRecorder {
 		// return parameters.get(parameterName);
 
 		// Another solution
+		String errorMessageStartsWith = "MethodName";
 		if (calledMethods.containsKey(methodName)) {
 			List<Map<String, Object>> methodCalls = calledMethods.get(methodName);
 
+			errorMessageStartsWith = "CallNumber";
 			if (methodCalls.size() > callNumber) {
 				Map<String, Object> parameters = methodCalls.get(callNumber);
 
+				errorMessageStartsWith = "ParameterName";
 				if (parameters.containsKey(parameterName)) {
 					return parameters.get(parameterName);
 				}
 			}
 		}
-		throw new RuntimeException("Value not found for methodName: " + methodName
-				+ ", callNumber: " + callNumber + "" + " and parameterName: " + parameterName);
+		throw new RuntimeException(errorMessageStartsWith + " not found for (methodName: "
+				+ methodName + ", callNumber: " + callNumber + "" + " and parameterName: "
+				+ parameterName + ")");
 
 	}
 
@@ -233,28 +245,41 @@ public class MethodCallRecorder {
 	 *            A Varargs Object with the expected parameter values in the order they are used in
 	 *            the method.
 	 */
-	// public void assertParameters(String methodName, int callNumber, Object... expectedValues) {
-	// try {
-	// Object[] inParameters = getInParametersAsArray(methodName, callNumber);
-	//
-	// int position = 0;
-	// for (Object expectedValue : expectedValues) {
-	// Object value = inParameters[position];
-	// assertParameter(expectedValue, value);
-	// position++;
-	// }
-	// } catch (Exception e) {
-	// assertTrue(false);
-	// }
-	// }
-	//
-	// private void assertParameter(Object expectedValue, Object value) {
-	// if (isStringOrInt(expectedValue)) {
-	// assertEquals(value, expectedValue);
-	// } else {
-	// assertSame(value, expectedValue);
-	// }
-	// }
+	public void assertParameters(String methodName, int callNumber, Object... expectedValues) {
+		try {
+			Object[] inParameters = getInParametersAsArray(methodName, callNumber);
+
+			int position = 0;
+			for (Object expectedValue : expectedValues) {
+				Object value = inParameters[position];
+				assertParameter(expectedValue, value);
+				position++;
+			}
+		} catch (Exception e) {
+			assertTrue(false);
+		}
+	}
+
+	void assertParameter(Object expectedValue, Object actualValue) {
+		throwExcpetionWhenDifferentTypes(expectedValue, actualValue);
+		if (isStringOrInt(expectedValue)) {
+			assertEquals(actualValue, expectedValue);
+		} else {
+			assertSame(actualValue, expectedValue);
+		}
+	}
+
+	private void throwExcpetionWhenDifferentTypes(Object expectedValue, Object value) {
+		if (differentTypes(expectedValue, value)) {
+			String message = "expected value type is " + expectedValue.getClass() + " but found "
+					+ value.getClass();
+			throw new RuntimeException(message);
+		}
+	}
+
+	private boolean differentTypes(Object objectA, Object objectB) {
+		return !objectA.getClass().equals(objectB.getClass());
+	}
 
 	/**
 	 * assertParameter is used to validate calls to spies and similar test helpers.
@@ -268,14 +293,14 @@ public class MethodCallRecorder {
 	 * @param expectedValue
 	 *            An Object with the expected parameter value
 	 */
-	// public void assertParameter(String methodName, int callNumber, String parameterName,
-	// Object expectedValue) {
-	//
-	// Object value = getValueForMethodNameAndCallNumberAndParameterName(methodName, callNumber,
-	// parameterName);
-	//
-	// assertParameter(expectedValue, value);
-	// }
+	public void assertParameter(String methodName, int callNumber, String parameterName,
+			Object expectedValue) {
+
+		Object value = getValueForMethodNameAndCallNumberAndParameterName(methodName, callNumber,
+				parameterName);
+
+		assertParameter(expectedValue, value);
+	}
 
 	/**
 	 * assertNumberOfCallsToMethod asserts the number of times a method has been called.
@@ -289,26 +314,26 @@ public class MethodCallRecorder {
 		// coraAssert.assertEquals(getNumberOfCallsToMethod(methodName), calledNumberOfTimes);
 		assertEquals(getNumberOfCallsToMethod(methodName), calledNumberOfTimes);
 	}
-	//
-	// private Object[] getInParametersAsArray(String methodName, int callNumber) {
-	// Object[] inParameters = getParametersForMethodAndCallNumber(methodName, callNumber).values()
-	// .toArray();
-	// return inParameters;
-	// }
-	//
-	// private boolean isStringOrInt(Object assertParameter) {
-	// return assertParameter instanceof String || isInt(assertParameter);
-	// }
-	//
-	// private boolean isInt(Object object) {
-	// try {
-	// Integer.parseInt((String) object);
-	// return true;
-	// } catch (Exception e) {
-	// return false;
-	// }
-	//
-	// }
+
+	private Object[] getInParametersAsArray(String methodName, int callNumber) {
+		Object[] inParameters = getParametersForMethodAndCallNumber(methodName, callNumber).values()
+				.toArray();
+		return inParameters;
+	}
+
+	private boolean isStringOrInt(Object assertParameter) {
+		return assertParameter instanceof String || isInt(assertParameter);
+	}
+
+	private boolean isInt(Object object) {
+		try {
+			Integer.parseInt((String) object);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+
+	}
 
 	/**
 	 * assertMethodWasCalled is used to assert that a method has been called
@@ -316,9 +341,9 @@ public class MethodCallRecorder {
 	 * @param methodName
 	 *            A String with the methodName to assert that it has been called
 	 */
-	// public void assertMethodWasCalled(String methodName) {
-	// assertTrue(methodWasCalled(methodName));
-	// }
+	public void assertMethodWasCalled(String methodName) {
+		assertTrue(methodWasCalled(methodName));
+	}
 
 	/**
 	 * assertMethodNotCalled is used to assert that a method has NOT been called
@@ -326,8 +351,8 @@ public class MethodCallRecorder {
 	 * @param methodName
 	 *            A String with the methodName to assert that it has NOT been called
 	 */
-	// public void assertMethodNotCalled(String methodName) {
-	// assertFalse(methodWasCalled(methodName));
-	// }
+	public void assertMethodNotCalled(String methodName) {
+		assertFalse(methodWasCalled(methodName));
+	}
 
 }
