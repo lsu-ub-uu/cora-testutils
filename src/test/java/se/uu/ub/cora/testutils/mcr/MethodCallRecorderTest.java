@@ -60,6 +60,10 @@ public class MethodCallRecorderTest {
 		MCR.addCall("param1", 1L, "param2", 3147483647L);
 	}
 
+	private void addCall4() {
+		MCR.addCall("param1", "onlyOne");
+	}
+
 	@Test
 	public void testGetNumberOfCallsToMethodNoMethodMatch() throws Exception {
 		assertEquals(MCR.getNumberOfCallsToMethod(""), 0);
@@ -78,14 +82,17 @@ public class MethodCallRecorderTest {
 		assertEquals(MCR.getNumberOfCallsToMethod("addCall2"), 3);
 	}
 
-	@Test
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "MethodName not found for \\(methodName: NoMethod, callNumber: 0\\)")
 	public void testAddCallWithParametersNoMatch() throws Exception {
 		assertEquals(MCR.getParametersForMethodAndCallNumber("NoMethod", 0).size(), 0);
 	}
 
-	@Test
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "CallNumber not found for \\(methodName: addCall1, callNumber: 10\\)")
 	public void testAddCallWithParametersMethodMatchWrongCallNumber() throws Exception {
 		addCall1();
+
 		assertEquals(MCR.getParametersForMethodAndCallNumber("addCall1", 10).size(), 0);
 	}
 
@@ -303,15 +310,6 @@ public class MethodCallRecorderTest {
 		MCR.assertParameter("addCall3", 0, "param2", new Long(A_LONG_TO_BIG_FOR_INT));
 	}
 
-	// @Test
-	// public void testName() throws Exception {
-	// Object o1 = 1;
-	// // Object o2 = Integer.valueOf(1);
-	// Object o2 = new Integer(1);
-	//
-	// assertSame(o1, o2, "");
-	// }
-
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[45\\] but found \\[1\\]")
 	public void testAssertParameterDifferentint() throws Exception {
@@ -331,6 +329,39 @@ public class MethodCallRecorderTest {
 		addCall2();
 
 		MCR.assertParameter("addCall2", 0, "param3", new Object());
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[ObjectOnlyForTest: 2\\] but found \\[ObjectOnlyForTest: 1\\]")
+	public void testAssertParameterDifferentObjectButEqualsIsTrueShouldThrowException()
+			throws Exception {
+		addCall5();
+
+		MCR.assertParameter("addCall5", 0, "param1", new ObjectOnlyForTest());
+	}
+
+	private void addCall5() {
+		MCR.addCall("param1", new ObjectOnlyForTest());
+	}
+
+	class ObjectOnlyForTest {
+		static int noOfCreatedInstances = 0;
+		int thisNo;
+
+		public ObjectOnlyForTest() {
+			noOfCreatedInstances++;
+			thisNo = noOfCreatedInstances;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "ObjectOnlyForTest: " + thisNo;
+		}
 	}
 
 	@Test
@@ -367,12 +398,12 @@ public class MethodCallRecorderTest {
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "Too many values to compare for \\(methodName: addCallForTest, callNumber: 0\\)")
+			+ "Too many values to compare for \\(methodName: addCall1, callNumber: 0\\)")
 	public void testMakeSureAssertParametersDoesNotCallsAssertParameterMoreTimesThanEnteredParams()
 			throws Exception {
 		addCall1();
 
-		MCR.assertParameters("addCallForTest", 0, "value1", "value2", "value3", "value4");
+		MCR.assertParameters("addCall1", 0, 1, "2", "valueNotRecorded");
 
 	}
 
@@ -393,6 +424,14 @@ public class MethodCallRecorderTest {
 		addCall2();
 
 		MCR.assertParameters("addCall1", 0, 1, "3");
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "CallNumber not found for \\(methodName: addCall4, callNumber: 1\\)")
+	public void testAssertParametersOnlyOneParameter() throws Exception {
+		addCall4();
+
+		MCR.assertParameters("addCall4", 1, "onlyOne");
 	}
 
 	@Test

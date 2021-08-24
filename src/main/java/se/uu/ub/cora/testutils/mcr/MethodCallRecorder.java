@@ -6,7 +6,6 @@ import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -160,6 +159,40 @@ public class MethodCallRecorder {
 	}
 
 	/**
+	 * getParametersForMethodAndCallNumber is used to get the values for a specific call to the
+	 * specified method. The parameters are returned as a map with the parameter name as key and the
+	 * parameter value as value.
+	 * <p>
+	 * If a request for parameters for a callNumber that is larger than the number of calls made
+	 * will a runtime exception will be thrown.
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @param callNumber
+	 *            An int with the order number of the call, starting on 0
+	 * @return a Map with with the parameter name as key and the parameter value as value.
+	 */
+	public Map<String, Object> getParametersForMethodAndCallNumber(String methodName,
+			int callNumber) {
+
+		String messageEnd = createNotFoundMessageForMethodNameAndCallNumber(methodName, callNumber)
+				+ ")";
+
+		return getParametersOrThrowErrorForMethodNameAndCallNumber(methodName, callNumber,
+				messageEnd);
+
+	}
+
+	private Map<String, Object> getParametersOrThrowErrorForMethodNameAndCallNumber(
+			String methodName, int callNumber, String messageEnd) {
+		throwErrorIfMethodNameNotRecorded(methodName, messageEnd);
+		List<Map<String, Object>> methodCalls = calledMethods.get(methodName);
+
+		throwErrorIfCallNumberNotRecorded(callNumber, messageEnd, methodCalls);
+		return methodCalls.get(callNumber);
+	}
+
+	/**
 	 * getValueForMethodNameAndCallNumberAndParameterName is used to get the value for a specific
 	 * method calls specified parameter
 	 * <p>
@@ -177,13 +210,11 @@ public class MethodCallRecorder {
 	public Object getValueForMethodNameAndCallNumberAndParameterName(String methodName,
 			int callNumber, String parameterName) {
 
-		String messageEnd = createMessageEnd(methodName, callNumber, parameterName);
+		String messageEnd = createNotFoundMessageForMethodNameAndCallNumberAndParameterName(
+				methodName, callNumber, parameterName);
 
-		throwErrorIfMethodNameNotRecorded(methodName, messageEnd);
-		List<Map<String, Object>> methodCalls = calledMethods.get(methodName);
-
-		throwErrorIfCallNumberNotRecorded(callNumber, messageEnd, methodCalls);
-		Map<String, Object> parameters = methodCalls.get(callNumber);
+		Map<String, Object> parameters = getParametersOrThrowErrorForMethodNameAndCallNumber(
+				methodName, callNumber, messageEnd);
 
 		throwErrorIfParameterNameNotRecorded(parameterName, messageEnd, parameters);
 
@@ -191,9 +222,15 @@ public class MethodCallRecorder {
 
 	}
 
-	private String createMessageEnd(String methodName, int callNumber, String parameterName) {
-		return " not found for (methodName: " + methodName + ", callNumber: " + callNumber + ""
+	private String createNotFoundMessageForMethodNameAndCallNumberAndParameterName(
+			String methodName, int callNumber, String parameterName) {
+		return createNotFoundMessageForMethodNameAndCallNumber(methodName, callNumber) + ""
 				+ " and parameterName: " + parameterName + ")";
+	}
+
+	private String createNotFoundMessageForMethodNameAndCallNumber(String methodName,
+			int callNumber) {
+		return " not found for (methodName: " + methodName + ", callNumber: " + callNumber;
 	}
 
 	private void throwErrorIfParameterNameNotRecorded(String parameterName, String messageEnd,
@@ -205,7 +242,7 @@ public class MethodCallRecorder {
 
 	private void throwErrorIfCallNumberNotRecorded(int callNumber, String messageEnd,
 			List<Map<String, Object>> methodCalls) {
-		if (methodCalls.size() < callNumber) {
+		if (methodCalls.size() <= callNumber) {
 			throw new RuntimeException("CallNumber" + messageEnd);
 		}
 	}
@@ -225,29 +262,6 @@ public class MethodCallRecorder {
 	 */
 	public boolean methodWasCalled(String methodName) {
 		return calledMethods.containsKey(methodName);
-	}
-
-	/**
-	 * getParametersForMethodAndCallNumber is used to get the values for a specific call to the
-	 * specified method. The parameters are returned as a map with the parameter name as key and the
-	 * parameter value as value.
-	 * <p>
-	 * If a request for parameters for a callNumber that is larger than the number of calls made
-	 * will an empty map be returned.
-	 * 
-	 * @param methodName
-	 *            A String with the method name
-	 * @param callNumber
-	 *            An int with the order number of the call, starting on 0
-	 * @return a Map with with the parameter name as key and the parameter value as value.
-	 */
-	public Map<String, Object> getParametersForMethodAndCallNumber(String methodName,
-			int callNumber) {
-		List<Map<String, Object>> methodCalls = calledMethods.get(methodName);
-		if (null != methodCalls && methodCalls.size() >= callNumber) {
-			return methodCalls.get(callNumber);
-		}
-		return Collections.emptyMap();
 	}
 
 	/**
