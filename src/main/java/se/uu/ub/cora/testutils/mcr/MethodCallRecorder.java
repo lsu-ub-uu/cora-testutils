@@ -33,6 +33,8 @@ import java.util.Map;
  * {@link #methodWasCalled(String)} method.
  */
 public class MethodCallRecorder {
+	private static final int NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD = 3;
+	private static final int NO_OF_PARAMETERS_FOR_ONE_RECORDED_PARAMETER = 2;
 	private Map<String, List<Map<String, Object>>> calledMethods = new HashMap<>();
 	private Map<String, List<Object>> returnedValues = new HashMap<>();
 
@@ -61,21 +63,18 @@ public class MethodCallRecorder {
 		int position = 0;
 		while (position < parameters.length) {
 			parameter.put((String) parameters[position], parameters[position + 1]);
-			position = position + 2;
+			position = position + NO_OF_PARAMETERS_FOR_ONE_RECORDED_PARAMETER;
 		}
 	}
 
 	private String getMethodNameFromCall() {
-		int numberOfCallsBackwardToFindCallingMethod = 3;
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		StackTraceElement stackTraceElement = stackTrace[numberOfCallsBackwardToFindCallingMethod];
+		StackTraceElement stackTraceElement = stackTrace[NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD];
 		return stackTraceElement.getMethodName();
 	}
 
 	private List<Map<String, Object>> possiblyAddMethodName(String methodName) {
-		return calledMethods.computeIfAbsent(methodName, key -> {
-			return new ArrayList<>();
-		});
+		return calledMethods.computeIfAbsent(methodName, key -> new ArrayList<>());
 	}
 
 	/**
@@ -95,9 +94,7 @@ public class MethodCallRecorder {
 	}
 
 	private List<Object> possiblyAddMethodNameToReturnedValues(String methodName) {
-		return returnedValues.computeIfAbsent(methodName, key -> {
-			return new ArrayList<>();
-		});
+		return returnedValues.computeIfAbsent(methodName, key -> new ArrayList<>());
 	}
 
 	/**
