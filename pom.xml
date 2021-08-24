@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>se.uu.ub.cora</groupId>
 		<artifactId>cora-parent</artifactId>
-		<version>1.4.2</version>
+		<version>1.4.4</version>
 	</parent>
 
 	<artifactId>testutils</artifactId>
@@ -23,9 +23,7 @@
 		<dependency>
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
-<!-- 			using 7.3.0 as assertSame is broken in 7.4.0 see bug: -->
-<!-- 			https://github.com/cbeust/testng/issues/2486 -->
-			<version>7.3.0</version>
+			<version>${testng.version}</version>
 		</dependency>
 	</dependencies>
 </project>
