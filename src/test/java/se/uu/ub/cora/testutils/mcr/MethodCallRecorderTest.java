@@ -287,7 +287,6 @@ public class MethodCallRecorderTest {
 			+ "expected value type is class java.lang.Integer but found class java.lang.String")
 	public void testAssertParameterValueDifferentTypesDynamicErrorMessage() throws Exception {
 		addCall1();
-
 		MCR.assertParameter("addCall1", 0, "param2", 2);
 	}
 
@@ -432,6 +431,32 @@ public class MethodCallRecorderTest {
 		addCall4();
 
 		MCR.assertParameters("addCall4", 1, "onlyOne");
+	}
+
+	@Test
+	public void testStoredValueIsNullCheckedNull() throws Exception {
+		MCR.addCall("param1", null);
+
+		String testValue = null;
+		MCR.assertParameters("testStoredValueIsNullCheckedNull", 0, testValue);
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[not null\\] but found \\[null\\]")
+	public void testStoredValueIsNullCheckedNotNull() throws Exception {
+		MCR.addCall("param1", null);
+
+		String testValue = "not null";
+		MCR.assertParameters("testStoredValueIsNullCheckedNotNull", 0, testValue);
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[null\\] but found \\[not null\\]")
+	public void testStoredValueIsNotNullCheckedNull() throws Exception {
+		MCR.addCall("param1", "not null");
+
+		String testValue = null;
+		MCR.assertParameters("testStoredValueIsNotNullCheckedNull", 0, testValue);
 	}
 
 	@Test
