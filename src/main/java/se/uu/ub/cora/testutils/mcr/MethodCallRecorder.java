@@ -303,12 +303,24 @@ public class MethodCallRecorder {
 	}
 
 	void assertValuesAreEqual(Object expectedValue, Object actualValue) {
+		if (atLeastOneValueIsNull(expectedValue, actualValue)) {
+			assertEquals(actualValue, expectedValue);
+		} else {
+			assertNonNullValues(expectedValue, actualValue);
+		}
+	}
+
+	private void assertNonNullValues(Object expectedValue, Object actualValue) {
 		throwExcpetionWhenDifferentTypes(expectedValue, actualValue);
 		if (isStringOrNumber(expectedValue)) {
 			assertEquals(actualValue, expectedValue);
 		} else {
 			assertSame(actualValue, expectedValue);
 		}
+	}
+
+	private boolean atLeastOneValueIsNull(Object expectedValue, Object actualValue) {
+		return null == expectedValue || null == actualValue;
 	}
 
 	private void throwExcpetionWhenDifferentTypes(Object expectedValue, Object value) {
