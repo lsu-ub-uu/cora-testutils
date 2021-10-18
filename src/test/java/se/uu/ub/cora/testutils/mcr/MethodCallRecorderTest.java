@@ -475,17 +475,33 @@ public class MethodCallRecorderTest {
 		MCR.addReturned(valueToReturn);
 
 		assertEquals(MCR.getReturnValue("someMethod", 0), "someValue");
-
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "CallNumber not found for \\(methodName: someMethod, callNumber: 0\\)")
+			+ "MethodName not found for \\(methodName: someMethod2, callNumber: 3\\)")
+	public void testAddReturnNoMethodFound2() throws Exception {
+		String valueToReturn = "someValue3";
+		MCR.addReturned(valueToReturn);
+
+		assertEquals(MCR.getReturnValue("someMethod2", 3), "someValue3");
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "CallNumber not found for \\(methodName: testAddReturnCallNumberNotFound, callNumber: 10\\)")
 	public void testAddReturnCallNumberNotFound() throws Exception {
 		String valueToReturn = "someValue";
 		MCR.addReturned(valueToReturn);
 
 		assertEquals(MCR.getReturnValue("testAddReturnCallNumberNotFound", 10), valueToReturn);
+	}
 
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "CallNumber not found for \\(methodName: testAddReturnCallNumberNotFound2, callNumber: 11\\)")
+	public void testAddReturnCallNumberNotFound2() throws Exception {
+		String valueToReturn = "someValue2";
+		MCR.addReturned(valueToReturn);
+
+		assertEquals(MCR.getReturnValue("testAddReturnCallNumberNotFound2", 11), valueToReturn);
 	}
 
 	@Test

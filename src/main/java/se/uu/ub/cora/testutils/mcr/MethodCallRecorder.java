@@ -112,11 +112,11 @@ public class MethodCallRecorder {
 			List<Object> returnedValuesForMethod = returnedValues.get(methodName);
 			return returnedValuesForMethod.get(callNumber);
 		} catch (NullPointerException ex) {
-			throw new RuntimeException(
-					"MethodName not found for (methodName: someMethod, callNumber: 0)");
+			throw new RuntimeException("MethodName not found for (methodName: " + methodName
+					+ ", callNumber: " + callNumber + ")");
 		} catch (IndexOutOfBoundsException ex) {
-			throw new RuntimeException(
-					"CallNumber not found for (methodName: someMethod, callNumber: 0)");
+			throw new RuntimeException("CallNumber not found for (methodName: " + methodName
+					+ ", callNumber: " + callNumber + ")");
 		}
 	}
 
