@@ -33,6 +33,7 @@ import java.util.Map;
  * {@link #methodWasCalled(String)} method.
  */
 public class MethodCallRecorder {
+	private static final String CALL_NUMBER_TEXT = ", callNumber: ";
 	private static final int NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD = 3;
 	private static final int NO_OF_PARAMETERS_FOR_ONE_RECORDED_PARAMETER = 2;
 	private Map<String, List<Map<String, Object>>> calledMethods = new HashMap<>();
@@ -113,10 +114,10 @@ public class MethodCallRecorder {
 			return returnedValuesForMethod.get(callNumber);
 		} catch (NullPointerException ex) {
 			throw new RuntimeException("MethodName not found for (methodName: " + methodName
-					+ ", callNumber: " + callNumber + ")");
+					+ CALL_NUMBER_TEXT + callNumber + ")");
 		} catch (IndexOutOfBoundsException ex) {
 			throw new RuntimeException("CallNumber not found for (methodName: " + methodName
-					+ ", callNumber: " + callNumber + ")");
+					+ CALL_NUMBER_TEXT + callNumber + ")");
 		}
 	}
 
@@ -227,7 +228,7 @@ public class MethodCallRecorder {
 
 	private String createNotFoundMessageForMethodNameAndCallNumber(String methodName,
 			int callNumber) {
-		return " not found for (methodName: " + methodName + ", callNumber: " + callNumber;
+		return " not found for (methodName: " + methodName + CALL_NUMBER_TEXT + callNumber;
 	}
 
 	private void throwErrorIfParameterNameNotRecorded(String parameterName, String messageEnd,
@@ -283,7 +284,7 @@ public class MethodCallRecorder {
 			assertAllParameters(inParameters, expectedValues);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			String message = "Too many values to compare for (methodName: " + methodName
-					+ ", callNumber: " + callNumber + ")";
+					+ CALL_NUMBER_TEXT + callNumber + ")";
 			throw new RuntimeException(message);
 		}
 	}
