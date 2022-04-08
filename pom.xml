@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>se.uu.ub.cora</groupId>
 		<artifactId>cora-parent</artifactId>
-		<version>1.4.4</version>
+		<version>1.8-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>testutils</artifactId>
