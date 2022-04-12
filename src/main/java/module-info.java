@@ -6,5 +6,6 @@ module se.uu.ub.cora.testutils {
 	requires org.testng;
 
 	exports se.uu.ub.cora.testutils.mcr;
+	exports se.uu.ub.cora.testutils.mrv;
 
 }
