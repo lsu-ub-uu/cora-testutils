@@ -22,12 +22,13 @@ package se.uu.ub.cora.testutils.mrv;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MethodReturnValues {
 	private static final int NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD = 3;
 
-	Map<String, Map<Object[], List<Object>>> valuesToReturn = new HashMap<>();
-	Map<String, Map<Object[], Integer>> callsToMethodAndParameters = new HashMap<>();
+	private Map<String, Map<Object[], List<Object>>> valuesToReturn = new HashMap<>();
+	private Map<String, Map<Object[], Integer>> callsToMethodAndParameters = new HashMap<>();
 
 	public void setReturnValues(String methodName, List<Object> returnValues,
 			Object... parameterValues) {
@@ -41,28 +42,80 @@ public class MethodReturnValues {
 
 	}
 
-	public Object getReturnValue(Object[] values) {
+	public Object getReturnValue(Object... parameterValues) {
 		String methodNameFromCall = getMethodNameFromCall();
 
-		if (!valuesToReturn.containsKey(methodNameFromCall)) {
+		if (noStoredReturnValueForMethodAndParameters(methodNameFromCall, parameterValues)) {
 			return new Object();
 		}
+		// TODO: need same looping check as others...
+		Integer numberOfCalls = callsToMethodAndParameters.get(methodNameFromCall)
+				.get(parameterValues) + 1;
+		callsToMethodAndParameters.get(methodNameFromCall).put(parameterValues, numberOfCalls);
 
-		// if (valuesToReturn.get(methodNameFromCall).containsKey(values)) {
-		// return new Object();
-		// }
-
-		Integer numberOfCalls = callsToMethodAndParameters.get(methodNameFromCall).get(values) + 1;
-		callsToMethodAndParameters.get(methodNameFromCall).put(values, numberOfCalls);
-
-		return valuesToReturn.get(methodNameFromCall).get(values).get(numberOfCalls - 1);
-
+		// return valuesToReturn.get(methodNameFromCall).get(parameterValues).get(numberOfCalls -
+		// 1);
+		return fetchStoredReturnValueForMethodAndParameters(methodNameFromCall, parameterValues)
+				.get(numberOfCalls - 1);
 	}
 
 	private String getMethodNameFromCall() {
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 		StackTraceElement stackTraceElement = stackTrace[NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD];
 		return stackTraceElement.getMethodName();
+	}
+
+	private boolean noStoredReturnValueForMethodAndParameters(String methodNameFromCall,
+			Object... parameterValues) {
+		if (!valuesToReturn.containsKey(methodNameFromCall)) {
+			return true;
+		}
+		// !valuesToReturn.get(methodNameFromCall).containsKey(parameterValues);
+		Map<Object[], List<Object>> valuesToReturnForThisMethod = valuesToReturn
+				.get(methodNameFromCall);
+		Set<Object[]> candiateParameterValueSets = valuesToReturnForThisMethod.keySet();
+		for (Object[] candiateParameterValues : candiateParameterValueSets) {
+			boolean allTheSameValue = true;
+			int no = 0;
+			for (Object candiateParameterValue : candiateParameterValues) {
+				if (!candiateParameterValue.equals(parameterValues[no])) {
+					allTheSameValue = false;
+				}
+				no++;
+			}
+			if (allTheSameValue) {
+				// match
+				return false;
+			}
+		}
+		// return !valuesToReturnForThisMethod.containsKey(parameterValues);
+		return true;
+	}
+
+	private List<Object> fetchStoredReturnValueForMethodAndParameters(String methodNameFromCall,
+			Object... parameterValues) {
+		// if (!valuesToReturn.containsKey(methodNameFromCall)) {
+		// return null;
+		// }
+		Map<Object[], List<Object>> valuesToReturnForThisMethod = valuesToReturn
+				.get(methodNameFromCall);
+		Set<Object[]> candiateParameterValueSets = valuesToReturnForThisMethod.keySet();
+		for (Object[] candiateParameterValues : candiateParameterValueSets) {
+			boolean allTheSameValue = true;
+			int no = 0;
+			for (Object candiateParameterValue : candiateParameterValues) {
+				if (!candiateParameterValue.equals(parameterValues[no])) {
+					allTheSameValue = false;
+				}
+				no++;
+			}
+			if (allTheSameValue) {
+				// match
+				return valuesToReturnForThisMethod.get(candiateParameterValues);
+			}
+		}
+		// should never get here
+		return null;
 	}
 
 }

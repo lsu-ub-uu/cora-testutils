@@ -24,18 +24,24 @@ import static org.testng.Assert.assertNotNull;
 
 import java.util.List;
 
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class MethodReturnValuesTest {
 
 	String methodName = "testName";
 	List<Object> returnValues;
-	Object[] parameterValues;
-	Object[] otherParameters;
+	Object[] parameterValues = { new Object() };
+	Object[] otherParameters = { new Object() };
+	private MethodReturnValues MRV;
+
+	@BeforeMethod
+	public void beforeMethod() {
+		MRV = new MethodReturnValues();
+	}
 
 	@Test
 	public void testReturnValueForThisMethod() throws Exception {
-		MethodReturnValues MRV = new MethodReturnValues();
 		String expectedReturnValue = "returnValue";
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("testReturnValueForThisMethod", returnValues, parameterValues);
@@ -48,7 +54,6 @@ public class MethodReturnValuesTest {
 
 	@Test
 	public void testReturnOtherValueForThisMethod() throws Exception {
-		MethodReturnValues MRV = new MethodReturnValues();
 		String expectedReturnValue = "otherValue";
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("testReturnOtherValueForThisMethod", returnValues, parameterValues);
@@ -61,7 +66,6 @@ public class MethodReturnValuesTest {
 
 	@Test
 	public void testReturnSeveralValueForThisMethod() throws Exception {
-		MethodReturnValues MRV = new MethodReturnValues();
 		returnValues = List.of("firstValue", "secondValue", "thirdValue");
 		// String expectedReturnValue = "otherValue";
 		MRV.setReturnValues("testReturnSeveralValueForThisMethod", returnValues, parameterValues);
@@ -78,26 +82,35 @@ public class MethodReturnValuesTest {
 
 	@Test
 	public void testMethodNameNotFound() throws Exception {
-		MethodReturnValues MRV = new MethodReturnValues();
 		String expectedReturnValue = "otherValue";
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("methodThatDoesNotExist", returnValues, parameterValues);
 
-		Object value = MRV.getReturnValue(parameterValues);
+		Object returnValue = MRV.getReturnValue(parameterValues);
 
-		assertNotNull(value);
+		assertNotNull(returnValue);
 	}
 
 	@Test
 	public void testParametersNotFound() throws Exception {
-		MethodReturnValues MRV = new MethodReturnValues();
 		String expectedReturnValue = "otherValue";
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("testParametersNotFound", returnValues, parameterValues);
 
-		Object value = MRV.getReturnValue(otherParameters);
+		Object returnValue = MRV.getReturnValue(otherParameters);
 
-		assertNotNull(value);
+		assertNotNull(returnValue);
+	}
+
+	@Test
+	public void testPrimitive() throws Exception {
+		MRV.setReturnValues("testPrimitive", List.of(1, 2, 3), "one", "two");
+
+		var return1 = MRV.getReturnValue("one", "two");
+		var return2 = MRV.getReturnValue("one", "two");
+		var return3 = MRV.getReturnValue("one", "two");
+		assertEquals(return1, 1);
+
 	}
 	// MRV.setReturnValue("containsChildWithNameInData", List.of(true), "paramAValue",
 	// "paramBValue");
