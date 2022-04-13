@@ -22,41 +22,79 @@ package se.uu.ub.cora.testutils.mrv;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import se.uu.ub.cora.testutils.mcr.MethodCallRecorder;
+
+/**
+ * MethodReturnValues is a test helper class used to set return values to methods in spies and
+ * similar test helping classes.
+ * <p>
+ * Spies and similar helper classes should create an internal public instance of this class and use
+ * that instance to get return values for its methods using the {@link #getReturnValue(Object...)}
+ * method.
+ * <p>
+ * Tests can then set return values for methods of the spy using the
+ * {@link #setReturnValues(String, List, Object...)} method.
+ * <p>
+ * This class is intended to be used in combination with {@link MethodCallRecorder}.
+ */
 public class MethodReturnValues {
 	private static final int NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD = 3;
+	private Map<NameValues, List<Object>> valuesToReturn = new HashMap<>();
+	private Map<NameValues, Integer> callsToMethodAndParameters = new HashMap<>();
 
-	private Map<String, Map<Object[], List<Object>>> valuesToReturn = new HashMap<>();
-	private Map<String, Map<Object[], Integer>> callsToMethodAndParameters = new HashMap<>();
-
+	/**
+	 * setReturnValues is expected to be used by tests to set desired return values for spies and
+	 * similar test helper classes.
+	 * <p>
+	 * Values set by this method can later be fetched by using the
+	 * {@link #getReturnValue(Object...)} method. Matching of which value to returned is done based
+	 * on the set methodName and parameter values.
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @param returnValues
+	 *            a List of Object to use as return values, where the value returned will start from
+	 *            the first and then continue down the list for each following request to
+	 *            getReturnValue
+	 * @param parameterValues
+	 *            An Object Varargs with the methods values.
+	 * 
+	 */
 	public void setReturnValues(String methodName, List<Object> returnValues,
 			Object... parameterValues) {
-		Map<Object[], List<Object>> valuesForParameter = new HashMap<>();
-		valuesForParameter.put(parameterValues, returnValues);
-		valuesToReturn.put(methodName, valuesForParameter);
+		NameValues nameValues = new NameValues(methodName, parameterValues);
 
-		Map<Object[], Integer> numberOfCallsForParameters = new HashMap<>();
-		numberOfCallsForParameters.put(parameterValues, 0);
-		callsToMethodAndParameters.put(methodName, numberOfCallsForParameters);
-
+		valuesToReturn.put(nameValues, returnValues);
+		callsToMethodAndParameters.put(nameValues, 0);
 	}
 
+	/**
+	 * getReturnValue is expected to be used by spies and similar test helper classes to get return
+	 * values to use for their methods.
+	 * <p>
+	 * It is expected that calls to this method is done from the spy method that is returning a
+	 * value. The value returned is from values set by the
+	 * {@link #setReturnValues(String, List, Object...)}method. The methods name is automatically
+	 * collected from the calling method, so that only the methods parameterValues needs to be sent
+	 * when calling this method.
+	 * 
+	 * @param parameterValues
+	 *            An Object Varargs with the methods values.<br>
+	 *            Ex: getReturnValue(parameter1Value, paramter2Value)
+	 * @return An Object with the previously stored return value. If no return value is set for the
+	 *         combination of this methods name and parameterValues, is an empty Object returned
+	 *         instead.
+	 */
 	public Object getReturnValue(Object... parameterValues) {
-		String methodNameFromCall = getMethodNameFromCall();
-
-		if (noStoredReturnValueForMethodAndParameters(methodNameFromCall, parameterValues)) {
+		String methodName = getMethodNameFromCall();
+		NameValues nameValues = new NameValues(methodName, parameterValues);
+		if (noReturnValuesExistForCall(nameValues)) {
 			return new Object();
 		}
-		// TODO: need same looping check as others...
-		Integer numberOfCalls = callsToMethodAndParameters.get(methodNameFromCall)
-				.get(parameterValues) + 1;
-		callsToMethodAndParameters.get(methodNameFromCall).put(parameterValues, numberOfCalls);
-
-		// return valuesToReturn.get(methodNameFromCall).get(parameterValues).get(numberOfCalls -
-		// 1);
-		return fetchStoredReturnValueForMethodAndParameters(methodNameFromCall, parameterValues)
-				.get(numberOfCalls - 1);
+		Integer numberOfCalls = callsToMethodAndParameters.get(nameValues);
+		callsToMethodAndParameters.put(nameValues, numberOfCalls + 1);
+		return valuesToReturn.get(nameValues).get(numberOfCalls);
 	}
 
 	private String getMethodNameFromCall() {
@@ -65,57 +103,7 @@ public class MethodReturnValues {
 		return stackTraceElement.getMethodName();
 	}
 
-	private boolean noStoredReturnValueForMethodAndParameters(String methodNameFromCall,
-			Object... parameterValues) {
-		if (!valuesToReturn.containsKey(methodNameFromCall)) {
-			return true;
-		}
-		// !valuesToReturn.get(methodNameFromCall).containsKey(parameterValues);
-		Map<Object[], List<Object>> valuesToReturnForThisMethod = valuesToReturn
-				.get(methodNameFromCall);
-		Set<Object[]> candiateParameterValueSets = valuesToReturnForThisMethod.keySet();
-		for (Object[] candiateParameterValues : candiateParameterValueSets) {
-			boolean allTheSameValue = true;
-			int no = 0;
-			for (Object candiateParameterValue : candiateParameterValues) {
-				if (!candiateParameterValue.equals(parameterValues[no])) {
-					allTheSameValue = false;
-				}
-				no++;
-			}
-			if (allTheSameValue) {
-				// match
-				return false;
-			}
-		}
-		// return !valuesToReturnForThisMethod.containsKey(parameterValues);
-		return true;
+	private boolean noReturnValuesExistForCall(NameValues nameValues) {
+		return !valuesToReturn.containsKey(nameValues);
 	}
-
-	private List<Object> fetchStoredReturnValueForMethodAndParameters(String methodNameFromCall,
-			Object... parameterValues) {
-		// if (!valuesToReturn.containsKey(methodNameFromCall)) {
-		// return null;
-		// }
-		Map<Object[], List<Object>> valuesToReturnForThisMethod = valuesToReturn
-				.get(methodNameFromCall);
-		Set<Object[]> candiateParameterValueSets = valuesToReturnForThisMethod.keySet();
-		for (Object[] candiateParameterValues : candiateParameterValueSets) {
-			boolean allTheSameValue = true;
-			int no = 0;
-			for (Object candiateParameterValue : candiateParameterValues) {
-				if (!candiateParameterValue.equals(parameterValues[no])) {
-					allTheSameValue = false;
-				}
-				no++;
-			}
-			if (allTheSameValue) {
-				// match
-				return valuesToReturnForThisMethod.get(candiateParameterValues);
-			}
-		}
-		// should never get here
-		return null;
-	}
-
 }

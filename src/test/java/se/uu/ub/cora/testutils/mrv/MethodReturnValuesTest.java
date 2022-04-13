@@ -20,7 +20,9 @@
 package se.uu.ub.cora.testutils.mrv;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.List;
 
@@ -103,14 +105,73 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testPrimitive() throws Exception {
-		MRV.setReturnValues("testPrimitive", List.of(1, 2, 3), "one", "two");
+	public void testStringValues() throws Exception {
+		MRV.setReturnValues("testStringValues", List.of(1, 2, 3), "one", "two");
 
 		var return1 = MRV.getReturnValue("one", "two");
 		var return2 = MRV.getReturnValue("one", "two");
 		var return3 = MRV.getReturnValue("one", "two");
-		assertEquals(return1, 1);
 
+		assertEquals(return1, 1);
+		assertEquals(return2, 2);
+		assertEquals(return3, 3);
+	}
+
+	@Test
+	public void testIntValues() throws Exception {
+		MRV.setReturnValues("testIntValues", List.of(1, 2, 3), 1, 2);
+
+		var return1 = MRV.getReturnValue(1, 2);
+		var return2 = MRV.getReturnValue(1, 2);
+		var return3 = MRV.getReturnValue(1, 2);
+
+		assertEquals(return1, 1);
+		assertEquals(return2, 2);
+		assertEquals(return3, 3);
+	}
+
+	@Test
+	public void testBoolanReturnValues() throws Exception {
+		MRV.setReturnValues("testBoolanReturnValues", List.of(true, false, true), 1);
+
+		boolean return1 = (boolean) MRV.getReturnValue(1);
+		boolean return2 = (boolean) MRV.getReturnValue(1);
+		boolean return3 = (boolean) MRV.getReturnValue(1);
+
+		assertTrue(return1);
+		assertFalse(return2);
+		assertTrue(return3);
+	}
+
+	@Test
+	public void testNoParameterValues() throws Exception {
+		MRV.setReturnValues("testNoParameterValues", List.of(1, 2, 3));
+
+		var return1 = MRV.getReturnValue();
+		assertEquals(return1, 1);
+	}
+
+	// @Test
+	// public void testNameValues() throws Exception {
+	// MRV.setReturnValues("testNameValues", List.of(1, 2, 3, 4, 5, 6, 7, 8, 9), "one", "two",
+	// "three");
+	//
+	// var return1 = MRV.getReturnValue("two", "one");
+	// assertEquals(return1, 1);
+	// }
+
+	@Test
+	public void testDifferentReturnValuesForDifferentParameterValues() throws Exception {
+		MRV.setReturnValues("testDifferentReturnValuesForDifferentParameterValues", List.of("one"),
+				"one");
+		MRV.setReturnValues("testDifferentReturnValuesForDifferentParameterValues", List.of("two"),
+				"two");
+
+		var return1 = MRV.getReturnValue("one");
+		var return2 = MRV.getReturnValue("two");
+
+		assertEquals(return1, "one");
+		assertEquals(return2, "two");
 	}
 	// MRV.setReturnValue("containsChildWithNameInData", List.of(true), "paramAValue",
 	// "paramBValue");

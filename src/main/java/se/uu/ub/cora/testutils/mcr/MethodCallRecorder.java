@@ -11,13 +11,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import se.uu.ub.cora.testutils.mrv.MethodReturnValues;
+
 /**
  * MethodCallRecorder is a test helper class used to record and validate calls to methods in spies
  * and similar test helping classes.
  * <p>
- * Spies and similar helper classes should create an internal instance of this class and then record
- * calls to its methods using the {@link #addCall(Object...)} method. And record answers to the
- * calls using the {@link #addReturned(Object)}method.
+ * Spies and similar helper classes should create an internal public instance of this class and then
+ * record calls to its methods using the {@link #addCall(Object...)} method. And record answers to
+ * the calls using the {@link #addReturned(Object)}method.
  * <p>
  * Tests can then validate that correct calls have been made using the
  * {@link #assertParameters(String, int, Object...)} method or the
@@ -31,6 +33,8 @@ import java.util.Map;
  * to use in external asserts and check the number of calls using the
  * {@link #getNumberOfCallsToMethod(String)} method or that a method has been called using the
  * {@link #methodWasCalled(String)} method.
+ * <p>
+ * This class is intended to be used in combination with {@link MethodReturnValues}.
  */
 public class MethodCallRecorder {
 	private static final String CALL_NUMBER_TEXT = ", callNumber: ";
