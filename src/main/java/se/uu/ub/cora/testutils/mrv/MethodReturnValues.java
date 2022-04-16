@@ -19,9 +19,11 @@
 
 package se.uu.ub.cora.testutils.mrv;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import se.uu.ub.cora.testutils.mcr.MethodCallRecorder;
 
@@ -31,17 +33,22 @@ import se.uu.ub.cora.testutils.mcr.MethodCallRecorder;
  * <p>
  * Spies and similar helper classes should create an internal public instance of this class and use
  * that instance to get return values for its methods using the {@link #getReturnValue(Object...)}
- * method.
+ * method. A spy normaly sets default return values for all methods using the
+ * {@link #setDefaultReturnValuesSupplier(String, Supplier)} method.
  * <p>
- * Tests can then set return values for methods of the spy using the
- * {@link #setReturnValues(String, List, Object...)} method.
+ * Tests can then set specific return values for methods of the spy using the
+ * {@link #setReturnValues(String, List, Object...)},
+ * {@link #setSpecificReturnValuesSupplier(String, Supplier, Object...)}
  * <p>
  * This class is intended to be used in combination with {@link MethodCallRecorder}.
  */
 public class MethodReturnValues {
 	private static final int NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD = 3;
 	private Map<NameValues, List<Object>> valuesToReturn = new HashMap<>();
-	private Map<NameValues, Integer> callsToMethodAndParameters = new HashMap<>();
+	private Map<NameValues, Integer> noOfReturnedNameValues = new HashMap<>();
+	private Map<NameValues, Supplier<Object>> specificReturnSuppliers = new HashMap<>();
+	private Map<String, Supplier<Object>> defaultReturnSuppliers = new HashMap<>();
+	private Map<NameValues, RuntimeException> exceptionToThrow = new HashMap<>();
 
 	/**
 	 * setReturnValues is expected to be used by tests to set desired return values for spies and
@@ -50,6 +57,8 @@ public class MethodReturnValues {
 	 * Values set by this method can later be fetched by using the
 	 * {@link #getReturnValue(Object...)} method. Matching of which value to returned is done based
 	 * on the set methodName and parameter values.
+	 * <p>
+	 * Ex: MRV.setReturnValues("methodName", List.of("return1", "return2"), "parameterValue")
 	 * 
 	 * @param methodName
 	 *            A String with the method name
@@ -64,9 +73,14 @@ public class MethodReturnValues {
 	public void setReturnValues(String methodName, List<Object> returnValues,
 			Object... parameterValues) {
 		NameValues nameValues = new NameValues(methodName, parameterValues);
-
 		valuesToReturn.put(nameValues, returnValues);
-		callsToMethodAndParameters.put(nameValues, 0);
+		noOfReturnedNameValues.put(nameValues, 0);
+	}
+
+	public void setThrowException(String methodName, RuntimeException returnException,
+			Object... parameterValues) {
+		NameValues nameValues = new NameValues(methodName, parameterValues);
+		exceptionToThrow.put(nameValues, returnException);
 	}
 
 	/**
@@ -78,6 +92,20 @@ public class MethodReturnValues {
 	 * {@link #setReturnValues(String, List, Object...)}method. The methods name is automatically
 	 * collected from the calling method, so that only the methods parameterValues needs to be sent
 	 * when calling this method.
+	 * <p>
+	 * Values/errors are returned from those set in the following order:
+	 * <ol>
+	 * <li>Return values set with {@link #setReturnValues(String, List, Object...)} as long as not
+	 * all values from the list have been returned</li>
+	 * <li>Return values from supplier set with
+	 * {@link #setSpecificReturnValuesSupplier(String, Supplier, Object...)}</li>
+	 * <li>Error to thrown set with {@link #setThrowException(String, RuntimeException, Object...)}
+	 * </li>
+	 * <li>Return values from supplier set with
+	 * {@link #setDefaultReturnValuesSupplier(String, Supplier)}</li>
+	 * <li>As a last resort is a runtime error thrown explaingin that nothing can be found to return
+	 * for the specified method and parameter values.</li>
+	 * </ol>
 	 * 
 	 * @param parameterValues
 	 *            An Object Varargs with the methods values.<br>
@@ -89,12 +117,23 @@ public class MethodReturnValues {
 	public Object getReturnValue(Object... parameterValues) {
 		String methodName = getMethodNameFromCall();
 		NameValues nameValues = new NameValues(methodName, parameterValues);
-		if (noReturnValuesExistForCall(nameValues)) {
-			return new Object();
+		if (specificNotUsedReturnValuesExist(nameValues)) {
+			Integer numberOfCalls = noOfReturnedNameValues.get(nameValues);
+			noOfReturnedNameValues.put(nameValues, numberOfCalls + 1);
+			return valuesToReturn.get(nameValues).get(numberOfCalls);
 		}
-		Integer numberOfCalls = callsToMethodAndParameters.get(nameValues);
-		callsToMethodAndParameters.put(nameValues, numberOfCalls + 1);
-		return valuesToReturn.get(nameValues).get(numberOfCalls);
+		if (specificReturnSuppliers.containsKey(nameValues)) {
+			return specificReturnSuppliers.get(nameValues).get();
+		}
+		if (exceptionToThrow.containsKey(nameValues)) {
+			throw exceptionToThrow.get(nameValues);
+		}
+		if (defaultReturnSuppliers.containsKey(methodName)) {
+			return defaultReturnSuppliers.get(methodName).get();
+		}
+		List<String> par = createListFromValues(parameterValues);
+		throw new RuntimeException("No return value found for methodName: " + methodName
+				+ " and parameterValues:" + String.join(", ", par));
 	}
 
 	private String getMethodNameFromCall() {
@@ -103,7 +142,66 @@ public class MethodReturnValues {
 		return stackTraceElement.getMethodName();
 	}
 
-	private boolean noReturnValuesExistForCall(NameValues nameValues) {
-		return !valuesToReturn.containsKey(nameValues);
+	private boolean specificNotUsedReturnValuesExist(NameValues nameValues) {
+		if (returnValuesExistForCall(nameValues)) {
+			Integer numberOfCalls = noOfReturnedNameValues.get(nameValues);
+			return valuesToReturn.get(nameValues).size() > numberOfCalls;
+		}
+		return false;
 	}
+
+	private boolean returnValuesExistForCall(NameValues nameValues) {
+		return valuesToReturn.containsKey(nameValues);
+	}
+
+	private List<String> createListFromValues(Object... parameterValues) {
+		List<String> par = new ArrayList<>();
+		for (Object object : parameterValues) {
+			par.add(object.toString());
+		}
+		return par;
+	}
+
+	/**
+	 * setSpecificReturnValuesSupplier is expected to be used by tests, to set a Supplier for return
+	 * values for specified parameterValues in spies and similar test helper classes.
+	 * <p>
+	 * Values set by this method can later be fetched by using the
+	 * {@link #getReturnValue(Object...)} method. Matching of which value to returned is done based
+	 * on the set methodName and parameter values.
+	 * <p>
+	 * Ex: MRV.setSpecificReturnValuesSupplier("methodName", mySpy::new, "parameterValue")
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @param supplier
+	 *            A Supplier that can supply instances to return
+	 * @param parameterValues
+	 *            An Object Varargs with the methods values.
+	 */
+	public void setSpecificReturnValuesSupplier(String methodName, Supplier<Object> supplier,
+			Object... parameterValues) {
+		NameValues nameValues = new NameValues(methodName, parameterValues);
+		specificReturnSuppliers.put(nameValues, supplier);
+	}
+
+	/**
+	 * setDefaultReturnValuesSupplier is expected to be used by tests, to set a default Supplier for
+	 * return values in spies and similar test helper classes.
+	 * <p>
+	 * Values set by this method can later be fetched by using the
+	 * {@link #getReturnValue(Object...)} method. Matching of which value to returned is done based
+	 * on the set methodName.
+	 * <p>
+	 * Ex: MRV.setDefaultReturnValuesSupplier("methodName", mySpy::new)
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @param supplier
+	 *            A Supplier that can supply instances to return
+	 */
+	public void setDefaultReturnValuesSupplier(String methodName, Supplier<Object> supplier) {
+		defaultReturnSuppliers.put(methodName, supplier);
+	}
+
 }

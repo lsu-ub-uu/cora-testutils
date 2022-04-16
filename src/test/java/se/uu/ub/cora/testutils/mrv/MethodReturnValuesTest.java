@@ -22,6 +22,8 @@ package se.uu.ub.cora.testutils.mrv;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
 import java.util.List;
@@ -86,11 +88,19 @@ public class MethodReturnValuesTest {
 	public void testMethodNameNotFound() throws Exception {
 		String expectedReturnValue = "otherValue";
 		returnValues = List.of(expectedReturnValue);
+
 		MRV.setReturnValues("methodThatDoesNotExist", returnValues, parameterValues);
 
-		Object returnValue = MRV.getReturnValue(parameterValues);
-
-		assertNotNull(returnValue);
+		Exception caughtException = null;
+		try {
+			MRV.getReturnValue("one");
+			assertTrue(false);
+		} catch (Exception e) {
+			caughtException = e;
+		}
+		assertNotNull(caughtException);
+		assertEquals(caughtException.getMessage(),
+				"No return value found for methodName: testMethodNameNotFound and parameterValues:one");
 	}
 
 	@Test
@@ -99,9 +109,16 @@ public class MethodReturnValuesTest {
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("testParametersNotFound", returnValues, parameterValues);
 
-		Object returnValue = MRV.getReturnValue(otherParameters);
-
-		assertNotNull(returnValue);
+		Exception caughtException = null;
+		try {
+			MRV.getReturnValue("one", "two");
+			assertTrue(false);
+		} catch (Exception e) {
+			caughtException = e;
+		}
+		assertNotNull(caughtException);
+		assertEquals(caughtException.getMessage(),
+				"No return value found for methodName: testParametersNotFound and parameterValues:one, two");
 	}
 
 	@Test
@@ -151,15 +168,6 @@ public class MethodReturnValuesTest {
 		assertEquals(return1, 1);
 	}
 
-	// @Test
-	// public void testNameValues() throws Exception {
-	// MRV.setReturnValues("testNameValues", List.of(1, 2, 3, 4, 5, 6, 7, 8, 9), "one", "two",
-	// "three");
-	//
-	// var return1 = MRV.getReturnValue("two", "one");
-	// assertEquals(return1, 1);
-	// }
-
 	@Test
 	public void testDifferentReturnValuesForDifferentParameterValues() throws Exception {
 		MRV.setReturnValues("testDifferentReturnValuesForDifferentParameterValues", List.of("one"),
@@ -173,6 +181,110 @@ public class MethodReturnValuesTest {
 		assertEquals(return1, "one");
 		assertEquals(return2, "two");
 	}
+
+	@Test
+	public void testDefaultReturnValues() throws Exception {
+		MRV.setDefaultReturnValuesSupplier("testDefaultReturnValues", String::new);
+
+		var return1 = MRV.getReturnValue();
+		assertTrue(return1 instanceof String);
+	}
+
+	@Test
+	public void testDefaultReturnValuesWithSpy() throws Exception {
+		MRV.setDefaultReturnValuesSupplier("testDefaultReturnValuesWithSpy", DummySpy::new);
+
+		var return1 = MRV.getReturnValue();
+		var return2 = MRV.getReturnValue();
+		assertTrue(return1 instanceof DummySpy);
+		assertNotSame(return1, return2);
+	}
+
+	@Test
+	public void testDefaultWithOneSetSpecific() throws Exception {
+		Object toReturn1 = new Object();
+		MRV.setReturnValues("testDefaultWithOneSetSpecific", List.of(toReturn1), "one");
+		MRV.setDefaultReturnValuesSupplier("testDefaultWithOneSetSpecific", DummySpy::new);
+
+		var return1 = MRV.getReturnValue("one");
+		var return2 = MRV.getReturnValue("one");
+		assertSame(return1, toReturn1);
+		assertTrue(return2 instanceof DummySpy);
+		assertNotSame(return1, return2);
+	}
+
+	@Test
+	public void testSpecificDefaultReturnValues() throws Exception {
+		MRV.setSpecificReturnValuesSupplier("testSpecificDefaultReturnValues", DummySpy::new,
+				"one");
+
+		var return1 = MRV.getReturnValue("one");
+		assertTrue(return1 instanceof DummySpy);
+	}
+
+	@Test
+	public void testReturnOrder() throws Exception {
+		Object toReturn1 = new Object();
+		MRV.setReturnValues("testReturnOrder", List.of(toReturn1), "one");
+		MRV.setSpecificReturnValuesSupplier("testReturnOrder", DummySpy::new, "one");
+		MRV.setDefaultReturnValuesSupplier("testReturnOrder", String::new);
+
+		var return1 = MRV.getReturnValue("one");
+		var return2 = MRV.getReturnValue("one");
+		var return3 = MRV.getReturnValue("two");
+		assertSame(return1, toReturn1);
+		assertTrue(return2 instanceof DummySpy);
+		assertTrue(return3 instanceof String);
+	}
+
+	@Test
+	public void testThrowException() throws Exception {
+		RuntimeException returnException = new RuntimeException();
+		MRV.setThrowException("testThrowException", returnException, "one");
+		Exception caughtException = null;
+		try {
+			MRV.getReturnValue("one");
+			assertTrue(false);
+		} catch (Exception e) {
+			caughtException = e;
+		}
+		assertNotNull(caughtException);
+		assertSame(caughtException, returnException);
+	}
+
+	@Test
+	public void testThrowOrder() throws Exception {
+		Object toReturn1 = new Object();
+		Object toReturn2 = new Object();
+		MRV.setReturnValues("testThrowOrder", List.of(toReturn1), "one");
+		MRV.setSpecificReturnValuesSupplier("testThrowOrder", DummySpy::new, "one");
+		MRV.setReturnValues("testThrowOrder", List.of(toReturn1), "one");
+
+		MRV.setReturnValues("testThrowOrder", List.of(toReturn2), "two");
+		MRV.setThrowException("testThrowOrder", new RuntimeException(), "two");
+		MRV.setDefaultReturnValuesSupplier("testThrowOrder", String::new);
+
+		MRV.getReturnValue("one");
+		MRV.getReturnValue("one");
+		MRV.getReturnValue("one");
+
+		MRV.getReturnValue("two");
+		Exception caughtException = null;
+		try {
+			MRV.getReturnValue("two");
+			assertTrue(false);
+		} catch (Exception e) {
+			caughtException = e;
+		}
+		assertNotNull(caughtException);
+	}
+	// -make it possible to set error to throw
+	// -make it possible to set default for some value
+	// -see if we can set a MVR in MCR, to reduce boilerplate code
+	// -think about if MCR could combine addCall and addReturn, with MVR to reduce boilerplate
+	// further
+	// -possibly get a value with type to get to make MRV do the casting...
+
 	// MRV.setReturnValue("containsChildWithNameInData", List.of(true), "paramAValue",
 	// "paramBValue");
 	// MRV.setReturnValue("containsChildWithNameInData", List.of(true), "plainTextPassword");
