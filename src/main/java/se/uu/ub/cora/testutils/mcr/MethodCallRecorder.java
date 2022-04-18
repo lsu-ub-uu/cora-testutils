@@ -42,6 +42,7 @@ public class MethodCallRecorder {
 	private static final int NO_OF_PARAMETERS_FOR_ONE_RECORDED_PARAMETER = 2;
 	private Map<String, List<Map<String, Object>>> calledMethods = new HashMap<>();
 	private Map<String, List<Object>> returnedValues = new HashMap<>();
+	private MethodReturnValues MRV;
 
 	/**
 	 * addCall is expected to be used by spies and similar test helper classes to record calls made
@@ -58,6 +59,15 @@ public class MethodCallRecorder {
 	 */
 	public void addCall(Object... parameters) {
 		String methodName = getMethodNameFromCall();
+		addCallForMethodNameAndParameters(methodName, parameters);
+	}
+
+	/**
+	 * addCallForMethodNameAndParameters is the same method as {@link #addCall(Object...)} but you
+	 * can manually specify the method name. This method is intended to build utilitity methods such
+	 * as {@link MethodCallRecorder#addCallAndReturnFromMRV(Object...)} to reduce boilerplate code
+	 */
+	public void addCallForMethodNameAndParameters(String methodName, Object... parameters) {
 		List<Map<String, Object>> list = possiblyAddMethodName(methodName);
 		Map<String, Object> parameter = new LinkedHashMap<>();
 		recordParameterNameAndValue(parameter, parameters);
@@ -72,7 +82,7 @@ public class MethodCallRecorder {
 		}
 	}
 
-	private String getMethodNameFromCall() {
+	protected String getMethodNameFromCall() {
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 		StackTraceElement stackTraceElement = stackTrace[NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD];
 		return stackTraceElement.getMethodName();
@@ -94,6 +104,16 @@ public class MethodCallRecorder {
 	 */
 	public void addReturned(Object returnedValue) {
 		String methodName = getMethodNameFromCall();
+		addReturnedForMethodNameAndReturnValue(methodName, returnedValue);
+	}
+
+	/**
+	 * addReturnedForMethodNameAndReturnValue is the same method as {@link #addReturned(Object)} but
+	 * you can manually specify the method name. This method is intended to build utilitity methods
+	 * such as {@link MethodCallRecorder#addCallAndReturnFromMRV(Object...)} to reduce boilerplate
+	 * code
+	 */
+	public void addReturnedForMethodNameAndReturnValue(String methodName, Object returnedValue) {
 		List<Object> list = possiblyAddMethodNameToReturnedValues(methodName);
 		list.add(returnedValue);
 	}
@@ -412,4 +432,69 @@ public class MethodCallRecorder {
 		assertFalse(methodWasCalled(methodName));
 	}
 
+	/**
+	 * useMRV makes this MethodCallRecorder use the supplied MethodReturnValues, to enable the use
+	 * of addCallReturnFromMRV to reduce boilerplate code in spies and similar test classes.
+	 * 
+	 * @param MRV
+	 *            A {@link MethodReturnValues} to use to get return values from
+	 */
+	public void useMRV(MethodReturnValues MRV) {
+		this.MRV = MRV;
+	}
+
+	/**
+	 * addCallAndReturnFromMRV is a utilityMethod to reduce boilerplate code in classes that use
+	 * {@link MethodCallRecorder}. It is the same as manually calling the following methods:
+	 * <ol>
+	 * <li>{@link MethodCallRecorder#addCall(Object...)}</li>
+	 * <li>{@link MethodReturnValues#getReturnValue(Object...)}</li>
+	 * <li>{@link MethodCallRecorder#addReturned(Object)}</li>
+	 * <li>and then return the returnValue</li>
+	 * </ol>
+	 * reducing boilerplate in most spy methods to a simple call:
+	 * <p>
+	 * Ex: return MCR.addCallAndReturnFromMRV("parameter1",parameter1,"parameter2",parameter2);
+	 * 
+	 * 
+	 * @param parameters
+	 * @return
+	 */
+	public Object addCallAndReturnFromMRV(Object... parameters) {
+		String methodName = getMethodNameFromCall();
+		throwErrorIfNoMRV();
+
+		addCallForMethodNameAndParameters(methodName, parameters);
+		Object returnValue = getReturnValueForMethodNameAndParameters(methodName, parameters);
+		addReturnedForMethodNameAndReturnValue(methodName, returnValue);
+
+		return returnValue;
+	}
+
+	private void throwErrorIfNoMRV() {
+		if (null == MRV) {
+			throw new RuntimeException("Method addCallAndReturnFromMRV can not be used "
+					+ "a MVR has been set using the method useMRV");
+		}
+	}
+
+	private Object getReturnValueForMethodNameAndParameters(String methodName,
+			Object... parameters) {
+		Object[] parameterValues = extractValuesFromParameters(parameters);
+		return MRV.getReturnValueForMethodNameAndParameters(methodName, parameterValues);
+	}
+
+	private Object[] extractValuesFromParameters(Object... parameters) {
+		Object[] parameterValues = new Object[parameters.length / 2];
+		int position = 0;
+		while (position < parameters.length) {
+			parameterValues[position] = parameters[position + 1];
+			position = position + NO_OF_PARAMETERS_FOR_ONE_RECORDED_PARAMETER;
+		}
+		return parameterValues;
+	}
+
+	public Object onlyForTestGetMRV() {
+		return MRV;
+	}
 }

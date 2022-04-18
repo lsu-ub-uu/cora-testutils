@@ -46,8 +46,8 @@ public class MethodReturnValues {
 	private static final int NUMBER_OF_CALLS_BACKWARD_TO_FIND_CALLING_METHOD = 3;
 	private Map<NameValues, List<Object>> valuesToReturn = new HashMap<>();
 	private Map<NameValues, Integer> noOfReturnedNameValues = new HashMap<>();
-	private Map<NameValues, Supplier<Object>> specificReturnSuppliers = new HashMap<>();
-	private Map<String, Supplier<Object>> defaultReturnSuppliers = new HashMap<>();
+	private Map<NameValues, Supplier<?>> specificReturnSuppliers = new HashMap<>();
+	private Map<String, Supplier<?>> defaultReturnSuppliers = new HashMap<>();
 	private Map<NameValues, RuntimeException> exceptionToThrow = new HashMap<>();
 
 	/**
@@ -116,6 +116,17 @@ public class MethodReturnValues {
 	 */
 	public Object getReturnValue(Object... parameterValues) {
 		String methodName = getMethodNameFromCall();
+		return getReturnValueForMethodNameAndParameters(methodName, parameterValues);
+	}
+
+	/**
+	 * getReturnValueForMethodNameAndParameters is the same method as
+	 * {@link #getMethodNameFromCall()} but you can manually specify the method name. This method is
+	 * intended to build utilitity methods such as
+	 * {@link MethodCallRecorder#addCallAndReturnFromMRV(Object...)} to reduce boilerplate code
+	 */
+	public Object getReturnValueForMethodNameAndParameters(String methodName,
+			Object... parameterValues) {
 		NameValues nameValues = new NameValues(methodName, parameterValues);
 		if (specificNotUsedReturnValuesExist(nameValues)) {
 			Integer numberOfCalls = noOfReturnedNameValues.get(nameValues);
@@ -200,7 +211,7 @@ public class MethodReturnValues {
 	 * @param supplier
 	 *            A Supplier that can supply instances to return
 	 */
-	public void setDefaultReturnValuesSupplier(String methodName, Supplier<Object> supplier) {
+	public void setDefaultReturnValuesSupplier(String methodName, Supplier<?> supplier) {
 		defaultReturnSuppliers.put(methodName, supplier);
 	}
 
