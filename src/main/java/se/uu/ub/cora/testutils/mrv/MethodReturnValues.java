@@ -77,6 +77,23 @@ public class MethodReturnValues {
 		noOfReturnedNameValues.put(nameValues, 0);
 	}
 
+	/**
+	 * setThrowException is expected to be used by tests to set a desired execption to throw for
+	 * spies and similar test helper classes. *
+	 * <p>
+	 * Exceptions set by this method will be thrown when trying to fetch a value, by using the
+	 * {@link #getReturnValue(Object...)} method. Matching of which error to throw is done based on
+	 * the set methodName and parameter values.
+	 * <p>
+	 * Ex: MRV.setThrowException("methodName", new RuntimeException(), "parameter1Value")
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @param returnException
+	 *            A RuntimeException to throw
+	 * @param parameterValues
+	 *            An Object Varargs with the methods values.
+	 */
 	public void setThrowException(String methodName, RuntimeException returnException,
 			Object... parameterValues) {
 		NameValues nameValues = new NameValues(methodName, parameterValues);
@@ -89,7 +106,7 @@ public class MethodReturnValues {
 	 * <p>
 	 * It is expected that calls to this method is done from the spy method that is returning a
 	 * value. The value returned is from values set by the
-	 * {@link #setReturnValues(String, List, Object...)}method. The methods name is automatically
+	 * {@link #setReturnValues(String, List, Object...)} method. The methods name is automatically
 	 * collected from the calling method, so that only the methods parameterValues needs to be sent
 	 * when calling this method.
 	 * <p>
