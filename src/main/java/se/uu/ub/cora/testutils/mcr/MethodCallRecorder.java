@@ -485,13 +485,13 @@ public class MethodCallRecorder {
 	}
 
 	private Object[] extractValuesFromParameters(Object... parameters) {
-		Object[] parameterValues = new Object[parameters.length / 2];
 		int position = 0;
+		List<Object> parameterValues = new ArrayList<>();
 		while (position < parameters.length) {
-			parameterValues[position] = parameters[position + 1];
+			parameterValues.add(parameters[position + 1]);
 			position = position + NO_OF_PARAMETERS_FOR_ONE_RECORDED_PARAMETER;
 		}
-		return parameterValues;
+		return parameterValues.toArray();
 	}
 
 	public Object onlyForTestGetMRV() {

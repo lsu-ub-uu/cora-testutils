@@ -561,6 +561,22 @@ public class MethodCallRecorderTest {
 	}
 
 	@Test
+	public void useMRVWithTwoParameters() throws Exception {
+		MethodReturnValues MRV = new MethodReturnValues();
+		MRV.setReturnValues("useMRVWithTwoParameters", List.of("return1"), "paramValue1",
+				"paramValue2");
+
+		MCR.useMRV(MRV);
+		Object returnValue = MCR.addCallAndReturnFromMRV("paramName", "paramValue1", "paramName2",
+				"paramValue2");
+
+		assertEquals(returnValue, "return1");
+		MCR.assertMethodWasCalled("useMRVWithTwoParameters");
+		MCR.assertReturn("useMRVWithTwoParameters", 0, "return1");
+		assertEquals(returnValue, "return1");
+	}
+
+	@Test
 	public void testOnlyForTestGetMRV() throws Exception {
 		MethodReturnValues MRV = new MethodReturnValues();
 		MCR.useMRV(MRV);
