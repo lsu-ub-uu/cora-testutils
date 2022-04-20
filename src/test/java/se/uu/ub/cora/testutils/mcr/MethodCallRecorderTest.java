@@ -2,6 +2,7 @@ package se.uu.ub.cora.testutils.mcr;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
@@ -11,6 +12,8 @@ import java.util.Map;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import se.uu.ub.cora.testutils.mrv.MethodReturnValues;
 
 public class MethodCallRecorderTest {
 
@@ -527,6 +530,42 @@ public class MethodCallRecorderTest {
 
 		MCR.assertReturn("testAddReturnedSeveralCalls", 0, "someValue1");
 		MCR.assertReturn("testAddReturnedSeveralCalls", 1, "someValue2");
+	}
+
+	@Test
+	public void testNoMRVsetThrowsError() throws Exception {
+		Exception caughtException = null;
+		try {
+			MCR.addCallAndReturnFromMRV("paramValue1");
+			assertTrue(false);
+		} catch (Exception e) {
+			caughtException = e;
+		}
+		assertNotNull(caughtException);
+		assertEquals(caughtException.getMessage(), "Method addCallAndReturnFromMRV can not be used "
+				+ "a MVR has been set using the method useMRV");
+	}
+
+	@Test
+	public void useMRV() throws Exception {
+		MethodReturnValues MRV = new MethodReturnValues();
+		MRV.setReturnValues("useMRV", List.of("return1"), "paramValue1");
+
+		MCR.useMRV(MRV);
+		Object returnValue = MCR.addCallAndReturnFromMRV("paramName", "paramValue1");
+
+		assertEquals(returnValue, "return1");
+		MCR.assertMethodWasCalled("useMRV");
+		MCR.assertReturn("useMRV", 0, "return1");
+		assertEquals(returnValue, "return1");
+	}
+
+	@Test
+	public void testOnlyForTestGetMRV() throws Exception {
+		MethodReturnValues MRV = new MethodReturnValues();
+		MCR.useMRV(MRV);
+
+		assertSame(MCR.onlyForTestGetMRV(), MRV);
 
 	}
 }
