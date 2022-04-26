@@ -278,6 +278,21 @@ public class MethodReturnValuesTest {
 		}
 		assertNotNull(caughtException);
 	}
+
+	@Test
+	public void testAlwaysThrowException() throws Exception {
+		RuntimeException returnException = new RuntimeException();
+		MRV.setAlwaysThrowException("testAlwaysThrowException", returnException);
+		Exception caughtException = null;
+		try {
+			MRV.getReturnValue();
+			assertTrue(false);
+		} catch (Exception e) {
+			caughtException = e;
+		}
+		assertNotNull(caughtException);
+		assertSame(caughtException, returnException);
+	}
 	// -make it possible to set error to throw
 	// -make it possible to set default for some value
 	// -see if we can set a MVR in MCR, to reduce boilerplate code

@@ -49,6 +49,7 @@ public class MethodReturnValues {
 	private Map<NameValues, Supplier<?>> specificReturnSuppliers = new HashMap<>();
 	private Map<String, Supplier<?>> defaultReturnSuppliers = new HashMap<>();
 	private Map<NameValues, RuntimeException> exceptionToThrow = new HashMap<>();
+	private Map<String, RuntimeException> alwaysThrow = new HashMap<>();
 
 	/**
 	 * setReturnValues is expected to be used by tests to set desired return values for spies and
@@ -98,6 +99,25 @@ public class MethodReturnValues {
 			Object... parameterValues) {
 		NameValues nameValues = new NameValues(methodName, parameterValues);
 		exceptionToThrow.put(nameValues, returnException);
+	}
+
+	/**
+	 * setAlwaysThrowException is expected to be used by tests to set a desired execption to throw
+	 * for spies and similar test helper classes. *
+	 * <p>
+	 * Exceptions set by this method will be thrown when trying to fetch a value, by using the
+	 * {@link #getReturnValue(Object...)} method. Matching of which error to throw is done based on
+	 * the set methodName.
+	 * <p>
+	 * Ex: MRV.setThrowException("methodName", new RuntimeException())
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @param returnException
+	 *            A RuntimeException to throw
+	 */
+	public void setAlwaysThrowException(String methodName, RuntimeException returnException) {
+		alwaysThrow.put(methodName, returnException);
 	}
 
 	/**
@@ -153,9 +173,13 @@ public class MethodReturnValues {
 		if (specificReturnSuppliers.containsKey(nameValues)) {
 			return specificReturnSuppliers.get(nameValues).get();
 		}
-		if (exceptionToThrow.containsKey(nameValues)) {
-			throw exceptionToThrow.get(nameValues);
-		}
+		possiblyThrowErrorForMethodNameAndParameters(methodName, parameterValues);
+		// if (exceptionToThrow.containsKey(nameValues)) {
+		// throw exceptionToThrow.get(nameValues);
+		// }
+		// if (alwaysThrow.containsKey(methodName)) {
+		// throw alwaysThrow.get(methodName);
+		// }
 		if (defaultReturnSuppliers.containsKey(methodName)) {
 			return defaultReturnSuppliers.get(methodName).get();
 		}
@@ -188,6 +212,17 @@ public class MethodReturnValues {
 			par.add(object.toString());
 		}
 		return par;
+	}
+
+	public void possiblyThrowErrorForMethodNameAndParameters(String methodName,
+			Object[] parameterValues) {
+		NameValues nameValues = new NameValues(methodName, parameterValues);
+		if (exceptionToThrow.containsKey(nameValues)) {
+			throw exceptionToThrow.get(nameValues);
+		}
+		if (alwaysThrow.containsKey(methodName)) {
+			throw alwaysThrow.get(methodName);
+		}
 	}
 
 	/**

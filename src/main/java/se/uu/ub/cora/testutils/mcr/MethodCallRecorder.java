@@ -50,6 +50,9 @@ public class MethodCallRecorder {
 	 * <p>
 	 * The calling methods name (from the spy or similar) is automatically added to the provided
 	 * parameters, so it can be used when later using the assert and get methods in this class.
+	 * <p>
+	 * If there is a connected {@link MethodReturnValues} will this method throw errors set using
+	 * set errors methods in MRV.
 	 * 
 	 * @param parameters
 	 *            An Object Varargs with the respective methods and their values. For each parameter
@@ -72,6 +75,10 @@ public class MethodCallRecorder {
 		Map<String, Object> parameter = new LinkedHashMap<>();
 		recordParameterNameAndValue(parameter, parameters);
 		list.add(parameter);
+		if (null != MRV) {
+			Object[] parameterValues = extractValuesFromParameters(parameters);
+			MRV.possiblyThrowErrorForMethodNameAndParameters(methodName, parameterValues);
+		}
 	}
 
 	private void recordParameterNameAndValue(Map<String, Object> parameter, Object... parameters) {

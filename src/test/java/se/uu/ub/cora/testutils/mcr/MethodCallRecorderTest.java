@@ -68,6 +68,38 @@ public class MethodCallRecorderTest {
 	}
 
 	@Test
+	public void testAddCallWithError() throws Exception {
+		MethodReturnValues MRV = new MethodReturnValues();
+		RuntimeException exception = new RuntimeException();
+		MRV.setAlwaysThrowException("testAddCallWithError", exception);
+
+		MCR.useMRV(MRV);
+
+		try {
+			MCR.addCall();
+			assertTrue(false);
+		} catch (Exception e) {
+			assertSame(e, exception);
+		}
+	}
+
+	@Test
+	public void testAddCallWithErrorParameter() throws Exception {
+		MethodReturnValues MRV = new MethodReturnValues();
+		RuntimeException exception = new RuntimeException();
+		MRV.setThrowException("testAddCallWithErrorParameter", exception, "one");
+
+		MCR.useMRV(MRV);
+
+		try {
+			MCR.addCall("one", "one");
+			assertTrue(false);
+		} catch (Exception e) {
+			assertSame(e, exception);
+		}
+	}
+
+	@Test
 	public void testGetNumberOfCallsToMethodNoMethodMatch() throws Exception {
 		assertEquals(MCR.getNumberOfCallsToMethod(""), 0);
 	}
@@ -543,7 +575,7 @@ public class MethodCallRecorderTest {
 		}
 		assertNotNull(caughtException);
 		assertEquals(caughtException.getMessage(), "Method addCallAndReturnFromMRV can not be used "
-				+ "a MVR has been set using the method useMRV");
+				+ "before a MVR has been set using the method useMRV");
 	}
 
 	@Test
@@ -582,6 +614,5 @@ public class MethodCallRecorderTest {
 		MCR.useMRV(MRV);
 
 		assertSame(MCR.onlyForTestGetMRV(), MRV);
-
 	}
 }
