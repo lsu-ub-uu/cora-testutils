@@ -473,7 +473,7 @@ public class MethodCallRecorder {
 
 	private void throwErrorIfNoMRV() {
 		if (null == MRV) {
-			throw new RuntimeException("Method addCallAndReturnFromMRV can not be used "
+			throw new RuntimeException("Method addCallAndReturnFromMRV can not be used before "
 					+ "a MVR has been set using the method useMRV");
 		}
 	}

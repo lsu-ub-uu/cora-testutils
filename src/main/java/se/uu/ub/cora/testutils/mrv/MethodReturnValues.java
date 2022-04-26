@@ -207,7 +207,7 @@ public class MethodReturnValues {
 	 * @param parameterValues
 	 *            An Object Varargs with the methods values.
 	 */
-	public void setSpecificReturnValuesSupplier(String methodName, Supplier<Object> supplier,
+	public void setSpecificReturnValuesSupplier(String methodName, Supplier<?> supplier,
 			Object... parameterValues) {
 		NameValues nameValues = new NameValues(methodName, parameterValues);
 		specificReturnSuppliers.put(nameValues, supplier);
