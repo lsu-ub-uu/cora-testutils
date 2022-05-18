@@ -338,10 +338,10 @@ public class MethodCallRecorderTest {
 	}
 
 	private void assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject() {
-		MCR.assertParameter("addCall1", 0, "param1", new Integer(1));
-		MCR.assertParameter("addCall3", 0, "param1", new Long(1));
-		MCR.assertParameter("addCall1", 0, "param2", new String("2"));
-		MCR.assertParameter("addCall3", 0, "param2", new Long(A_LONG_TO_BIG_FOR_INT));
+		MCR.assertParameter("addCall1", 0, "param1", Integer.valueOf(1));
+		MCR.assertParameter("addCall3", 0, "param1", Long.valueOf(1));
+		MCR.assertParameter("addCall1", 0, "param2", String.valueOf("2"));
+		MCR.assertParameter("addCall3", 0, "param2", Long.valueOf(A_LONG_TO_BIG_FOR_INT));
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""

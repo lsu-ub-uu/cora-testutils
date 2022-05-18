@@ -174,12 +174,6 @@ public class MethodReturnValues {
 			return specificReturnSuppliers.get(nameValues).get();
 		}
 		possiblyThrowErrorForMethodNameAndParameters(methodName, parameterValues);
-		// if (exceptionToThrow.containsKey(nameValues)) {
-		// throw exceptionToThrow.get(nameValues);
-		// }
-		// if (alwaysThrow.containsKey(methodName)) {
-		// throw alwaysThrow.get(methodName);
-		// }
 		if (defaultReturnSuppliers.containsKey(methodName)) {
 			return defaultReturnSuppliers.get(methodName).get();
 		}
