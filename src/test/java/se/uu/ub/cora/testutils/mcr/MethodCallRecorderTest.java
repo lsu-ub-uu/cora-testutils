@@ -287,11 +287,25 @@ public class MethodCallRecorderTest {
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "MethodName not found for \\(methodName: someMethod, callNumber: 0 and parameterName: someParameterName\\)")
+	public void testAssertParameterAsEqualNotFoundMethodName() throws Exception {
+		MCR.assertParameterAsEqual("someMethod", 0, "someParameterName", "expectedValue");
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "CallNumber not found for \\(methodName: addCall1, callNumber: 10 and parameterName: someParameterName\\)")
 	public void testAssertParameterNotFoundCallNumber() throws Exception {
 		addCall1();
 
 		MCR.assertParameter("addCall1", 10, "someParameterName", "expectedValue");
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "CallNumber not found for \\(methodName: addCall1, callNumber: 10 and parameterName: someParameterName\\)")
+	public void testAssertParameterAsEqualNotFoundCallNumber() throws Exception {
+		addCall1();
+
+		MCR.assertParameterAsEqual("addCall1", 10, "someParameterName", "expectedValue");
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
@@ -302,12 +316,28 @@ public class MethodCallRecorderTest {
 		MCR.assertParameter("addCall1", 0, "someParameterName", "expectedValue");
 	}
 
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "ParameterName not found for \\(methodName: addCall1, callNumber: 0 and parameterName: someParameterName\\)")
+	public void testAssertParameterAsEqualNotFoundParamName() throws Exception {
+		addCall1();
+
+		MCR.assertParameterAsEqual("addCall1", 0, "someParameterName", "expectedValue");
+	}
+
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[100\\] but found \\[1\\]")
 	public void testAssertParameterValueNotEqual() throws Exception {
 		addCall1();
 
 		MCR.assertParameter("addCall1", 0, "param1", 100);
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[100\\] but found \\[1\\]")
+	public void testAssertParameterAsEqualValueNotEqual() throws Exception {
+		addCall1();
+
+		MCR.assertParameterAsEqual("addCall1", 0, "param1", 100);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
@@ -319,10 +349,26 @@ public class MethodCallRecorderTest {
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "expected value type is class java.lang.String but found class java.lang.Integer")
+	public void testAssertParameterAsEqualValueDifferentTypes() throws Exception {
+		addCall1();
+
+		MCR.assertParameterAsEqual("addCall1", 0, "param1", "1");
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "expected value type is class java.lang.Integer but found class java.lang.String")
 	public void testAssertParameterValueDifferentTypesDynamicErrorMessage() throws Exception {
 		addCall1();
 		MCR.assertParameter("addCall1", 0, "param2", 2);
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "expected value type is class java.lang.Integer but found class java.lang.String")
+	public void testAssertParameterAsEqualValueDifferentTypesDynamicErrorMessage()
+			throws Exception {
+		addCall1();
+		MCR.assertParameterAsEqual("addCall1", 0, "param2", 2);
 	}
 
 	@Test
@@ -332,9 +378,10 @@ public class MethodCallRecorderTest {
 		addCall3();
 
 		MCR.assertParameter("addCall1", 0, "param1", 1);
-		assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject();
 		MCR.assertParameter("addCall2", 0, "param3", objectParameter);
 		MCR.assertParameter("addCall3", 0, "param1", 1L);
+
+		assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject();
 	}
 
 	private void assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject() {
@@ -342,6 +389,26 @@ public class MethodCallRecorderTest {
 		MCR.assertParameter("addCall3", 0, "param1", Long.valueOf(1));
 		MCR.assertParameter("addCall1", 0, "param2", String.valueOf("2"));
 		MCR.assertParameter("addCall3", 0, "param2", Long.valueOf(A_LONG_TO_BIG_FOR_INT));
+	}
+
+	@Test
+	public void testAssertParameterAsEqualEqualValues() throws Exception {
+		addCall1();
+		addCall2();
+		addCall3();
+
+		MCR.assertParameterAsEqual("addCall1", 0, "param1", 1);
+		MCR.assertParameterAsEqual("addCall2", 0, "param3", objectParameter);
+		MCR.assertParameterAsEqual("addCall3", 0, "param1", 1L);
+
+		assertParametersAsEqualForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject();
+	}
+
+	private void assertParametersAsEqualForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject() {
+		MCR.assertParameterAsEqual("addCall1", 0, "param1", Integer.valueOf(1));
+		MCR.assertParameterAsEqual("addCall3", 0, "param1", Long.valueOf(1));
+		MCR.assertParameterAsEqual("addCall1", 0, "param2", String.valueOf("2"));
+		MCR.assertParameterAsEqual("addCall3", 0, "param2", Long.valueOf(A_LONG_TO_BIG_FOR_INT));
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
@@ -353,9 +420,23 @@ public class MethodCallRecorderTest {
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[45\\] but found \\[1\\]")
+	public void testAssertParameterAsEqualDifferentint() throws Exception {
+		addCall1();
+		MCR.assertParameterAsEqual("addCall1", 0, "param1", 45);
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[45\\] but found \\[1\\]")
 	public void testAssertParameterDifferentLong() throws Exception {
 		addCall3();
 		MCR.assertParameter("addCall3", 0, "param1", 45L);
+	}
+
+	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
+			+ "expected \\[45\\] but found \\[1\\]")
+	public void testAssertParameterAsEqualDifferentLong() throws Exception {
+		addCall3();
+		MCR.assertParameterAsEqual("addCall3", 0, "param1", 45L);
 	}
 
 	@Test(expectedExceptions = AssertionError.class)
@@ -365,26 +446,54 @@ public class MethodCallRecorderTest {
 		MCR.assertParameter("addCall2", 0, "param3", new Object());
 	}
 
+	@Test(expectedExceptions = AssertionError.class)
+	public void testAssertParameterAsEqualDifferentObject() throws Exception {
+		addCall2();
+
+		MCR.assertParameterAsEqual("addCall2", 0, "param3", new Object());
+	}
+
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[ObjectOnlyForTest: 2\\] but found \\[ObjectOnlyForTest: 1\\]")
 	public void testAssertParameterDifferentObjectButEqualsIsTrueShouldThrowException()
 			throws Exception {
 		addCall5();
 
-		MCR.assertParameter("addCall5", 0, "param1", new ObjectOnlyForTest());
+		MCR.assertParameter("addCall5", 0, "param1", new ObjectOnlyForTest(2));
 	}
 
 	private void addCall5() {
-		MCR.addCall("param1", new ObjectOnlyForTest());
+		MCR.addCall("param1", new ObjectOnlyForTest(1));
+	}
+
+	@Test
+	public void testAssertParameterAsEqualDifferentObjectButEqualsIsTrue() throws Exception {
+		addObjectOnlyForTestCall();
+
+		MCR.assertParameterAsEqual("addObjectOnlyForTestCall", 0, "param1",
+				new ObjectOnlyForTest(2));
+	}
+
+	private void addObjectOnlyForTestCall() {
+		MCR.addCall("param1", new ObjectOnlyForTest(1));
+	}
+
+	@Test
+	public void testAssertParameterAsEqualList() throws Exception {
+		addListCall();
+
+		MCR.assertParameterAsEqual("addListCall", 0, "param1", List.of("item1", "item2"));
+	}
+
+	private void addListCall() {
+		MCR.addCall("param1", List.of("item1", "item2"));
 	}
 
 	class ObjectOnlyForTest {
-		static int noOfCreatedInstances = 0;
 		int thisNo;
 
-		public ObjectOnlyForTest() {
-			noOfCreatedInstances++;
-			thisNo = noOfCreatedInstances;
+		public ObjectOnlyForTest(int number) {
+			thisNo = number;
 		}
 
 		@Override
