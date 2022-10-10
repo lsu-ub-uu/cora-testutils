@@ -404,6 +404,27 @@ public class MethodCallRecorder {
 	}
 
 	/**
+	 * assertParameter is used to validate calls to spies and similar test helpers.
+	 * 
+	 * @param methodName
+	 *            A String with the methodName to check parameters for
+	 * @param callNumber
+	 *            An int with the order number of the call, starting on 0
+	 * @param parameterName
+	 *            A String with the parameter name to check the value of
+	 * @param expectedValue
+	 *            An Object with the expected parameter value
+	 */
+	public void assertParameterAsEqual(String methodName, int callNumber, String parameterName,
+			Object expectedValue) {
+
+		Object value = getValueForMethodNameAndCallNumberAndParameterName(methodName, callNumber,
+				parameterName);
+		throwExcpetionWhenDifferentTypes(expectedValue, value);
+		assertEquals(value, expectedValue);
+	}
+
+	/**
 	 * assertNumberOfCallsToMethod asserts the number of times a method has been called.
 	 * 
 	 * @param methodName
