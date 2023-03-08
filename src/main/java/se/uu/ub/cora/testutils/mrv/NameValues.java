@@ -18,6 +18,7 @@
  */
 package se.uu.ub.cora.testutils.mrv;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 class NameValues {
@@ -52,7 +53,13 @@ class NameValues {
 		}
 		int no = 0;
 		for (Object parameterValue : parameterValues) {
-			if (!parameterValue.equals(pValues[no])) {
+
+			if (parameterValue instanceof Object[]) {
+				if (!Arrays.equals((Object[]) parameterValue, (Object[]) pValues[no])) {
+					return false;
+				}
+
+			} else if (!parameterValue.equals(pValues[no])) {
 				return false;
 			}
 			no++;
@@ -63,9 +70,10 @@ class NameValues {
 	@Override
 	public int hashCode() {
 		int parametersHash = 0;
-		for (Object parameterValue : parameterValues) {
-			parametersHash += Objects.hash(parameterValue);
-		}
-		return Objects.hash(methodName, parametersHash);
+		parametersHash += Arrays.deepHashCode(parameterValues);
+		// parametersHash += Objects.hash(parameterValue);
+		int hash = Objects.hash(methodName, parametersHash);
+		System.out.println(hash);
+		return hash;
 	}
 }
