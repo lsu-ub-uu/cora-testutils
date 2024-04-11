@@ -1,3 +1,22 @@
+/*
+ * Copyright 2021, 2022, 2024 Uppsala University Library
+ * Copyright 2024 Olov McKie
+ *
+ * This file is part of Cora.
+ *
+ *     Cora is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Cora is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with Cora.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package se.uu.ub.cora.testutils.mcr;
 
 import static org.testng.Assert.assertEquals;
@@ -5,6 +24,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +37,39 @@ import se.uu.ub.cora.testutils.mrv.MethodReturnValues;
 
 public class MethodCallRecorderTest {
 
+	private static final String ADD_CALL = "addCall";
+	private static final String ADD_CALL1 = "addCall1";
+	private static final String ADD_CALL2 = "addCall2";
+	private static final String ADD_CALL3 = "addCall3";
+	private static final String ADD_CALL4 = "addCall4";
+
+	private static final String USE_MRV = "useMRV";
+	private static final String RETURN1 = "return1";
+	private static final String ITEM1 = "item1";
+	private static final String ITEM2 = "item2";
+	private static final String ONE = "one";
+	private static final String ONLY_ONE = "onlyOne";
+
+	private static final String PARAM1 = "param1";
+	private static final String PARAM2 = "param2";
+	private static final String PARAM3 = "param3";
+	private static final String SOME_PARAMETER_NAME = "someParameterName";
+	private static final String PARAMETER_NAME = "parameterName";
+	private static final String PARAM_NAME = "paramName";
+	private static final String PARAM_NAME2 = "paramName2";
+
+	private static final String EXPECTED_VALUE = "expectedValue";
+	private static final String SOME_VALUE = "someValue";
+	private static final String SOME_VALUE1 = "someValue1";
+	private static final String SOME_VALUE2 = "someValue2";
+	private static final String SOME_VALUE3 = "someValue3";
+	private static final String SOME_OTHER_VALUE = "someOtherValue";
+	private static final String PARAM_VALUE1 = "paramValue1";
+	private static final String PARAM_VALUE2 = "paramValue2";
+	private static final String VALUE1 = "value1";
+	private static final String VALUE2 = "value2";
+	private static final String VALUE3 = "value3";
+	private static final String SOME_METHOD = "someMethod";
 	private static final long A_LONG_TO_BIG_FOR_INT = 3147483647L;
 	MethodCallRecorder MCR;
 	private Object objectParameter = new Object();
@@ -45,26 +98,25 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall2();
 
-		assertTrue(MCR.methodWasCalled("addCall1"));
-		assertTrue(MCR.methodWasCalled("addCall2"));
-		assertFalse(MCR.methodWasCalled("addCall3"));
-
+		assertTrue(MCR.methodWasCalled(ADD_CALL1));
+		assertTrue(MCR.methodWasCalled(ADD_CALL2));
+		assertFalse(MCR.methodWasCalled(ADD_CALL3));
 	}
 
 	private void addCall1() {
-		MCR.addCall("param1", 1, "param2", "2");
+		MCR.addCall(PARAM1, 1, PARAM2, "2");
 	}
 
 	private void addCall2() {
-		MCR.addCall("param2", 2, "param3", objectParameter);
+		MCR.addCall(PARAM2, 2, PARAM3, objectParameter);
 	}
 
 	private void addCall3() {
-		MCR.addCall("param1", 1L, "param2", 3147483647L);
+		MCR.addCall(PARAM1, 1L, PARAM2, 3147483647L);
 	}
 
 	private void addCall4() {
-		MCR.addCall("param1", "onlyOne");
+		MCR.addCall(PARAM1, ONLY_ONE);
 	}
 
 	@Test
@@ -77,7 +129,7 @@ public class MethodCallRecorderTest {
 
 		try {
 			MCR.addCall();
-			assertTrue(false);
+			fail("An exception should have been thrown");
 		} catch (Exception e) {
 			assertSame(e, exception);
 		}
@@ -87,13 +139,13 @@ public class MethodCallRecorderTest {
 	public void testAddCallWithErrorParameter() throws Exception {
 		MethodReturnValues MRV = new MethodReturnValues();
 		RuntimeException exception = new RuntimeException();
-		MRV.setThrowException("testAddCallWithErrorParameter", exception, "one");
+		MRV.setThrowException("testAddCallWithErrorParameter", exception, ONE);
 
 		MCR.useMRV(MRV);
 
 		try {
-			MCR.addCall("one", "one");
-			assertTrue(false);
+			MCR.addCall(ONE, ONE);
+			fail("An exception should have been thrown");
 		} catch (Exception e) {
 			assertSame(e, exception);
 		}
@@ -113,8 +165,8 @@ public class MethodCallRecorderTest {
 		addCall2();
 		addCall2();
 
-		assertEquals(MCR.getNumberOfCallsToMethod("addCall1"), 2);
-		assertEquals(MCR.getNumberOfCallsToMethod("addCall2"), 3);
+		assertEquals(MCR.getNumberOfCallsToMethod(ADD_CALL1), 2);
+		assertEquals(MCR.getNumberOfCallsToMethod(ADD_CALL2), 3);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
@@ -128,7 +180,7 @@ public class MethodCallRecorderTest {
 	public void testAddCallWithParametersMethodMatchWrongCallNumber() throws Exception {
 		addCall1();
 
-		assertEquals(MCR.getParametersForMethodAndCallNumber("addCall1", 10).size(), 0);
+		assertEquals(MCR.getParametersForMethodAndCallNumber(ADD_CALL1, 10).size(), 0);
 	}
 
 	@Test
@@ -136,53 +188,54 @@ public class MethodCallRecorderTest {
 		addCall2();
 		addCall1();
 
-		Map<String, Object> parametersCall1 = MCR.getParametersForMethodAndCallNumber("addCall1",
-				0);
+		Map<String, Object> parametersCall1 = MCR.getParametersForMethodAndCallNumber(ADD_CALL1, 0);
 
 		assertEquals(parametersCall1.size(), 2);
-		assertEquals(parametersCall1.get("param1"), 1);
-		assertEquals(parametersCall1.get("param2"), "2");
+		assertEquals(parametersCall1.get(PARAM1), 1);
+		assertEquals(parametersCall1.get(PARAM2), "2");
 
-		Map<String, Object> parametersCall2 = MCR.getParametersForMethodAndCallNumber("addCall2",
-				0);
+		Map<String, Object> parametersCall2 = MCR.getParametersForMethodAndCallNumber(ADD_CALL2, 0);
 
 		assertEquals(parametersCall2.size(), 2);
-		assertEquals(parametersCall2.get("param2"), 2);
-		assertSame(parametersCall2.get("param3"), objectParameter);
+		assertEquals(parametersCall2.get(PARAM2), 2);
+		assertSame(parametersCall2.get(PARAM3), objectParameter);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "MethodName not found for \\(methodName: methodName, callNumber: 0 and parameterName: parameterName\\)")
+			+ "MethodName not found for \\(methodName: methodName, callNumber: 0 "
+			+ "and parameterName: parameterName\\)")
 	public void testGetValueForMethodNameAndCallNumberAndParameterNameNoMatch() throws Exception {
-		MCR.getValueForMethodNameAndCallNumberAndParameterName("methodName", 0, "parameterName");
+		MCR.getValueForMethodNameAndCallNumberAndParameterName("methodName", 0, PARAMETER_NAME);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "MethodName not found for \\(methodName: addCall, callNumber: 10 and parameterName: parameterName\\)")
+			+ "MethodName not found for \\(methodName: addCall, callNumber: 10 "
+			+ "and parameterName: parameterName\\)")
 	public void testGetValueForMethodNameAndCallNumberAndParameterNameCallNumberNoMatch()
 			throws Exception {
 		addCall1();
 
-		MCR.getValueForMethodNameAndCallNumberAndParameterName("addCall", 10, "parameterName");
+		MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL, 10, PARAMETER_NAME);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "MethodName not found for \\(methodName: addCall, callNumber: 0 and parameterName: parameterName\\)")
+			+ "MethodName not found for \\(methodName: addCall, callNumber: 0 "
+			+ "and parameterName: parameterName\\)")
 	public void testGetValueForMethodNameAndCallNumberAndParameterNameParameterNameNoMatch()
 			throws Exception {
 		addCall1();
 
-		MCR.getValueForMethodNameAndCallNumberAndParameterName("addCall", 0, "parameterName");
+		MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL, 0, PARAMETER_NAME);
 	}
 
 	@Test
 	public void testNameOneCall() throws Exception {
 		addCall1();
 
-		Object valueCall1Param1 = MCR.getValueForMethodNameAndCallNumberAndParameterName("addCall1",
-				0, "param1");
-		Object valueCall1Param2 = MCR.getValueForMethodNameAndCallNumberAndParameterName("addCall1",
-				0, "param2");
+		Object valueCall1Param1 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL1,
+				0, PARAM1);
+		Object valueCall1Param2 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL1,
+				0, PARAM2);
 
 		assertEquals(valueCall1Param1, 1);
 		assertEquals(valueCall1Param2, "2");
@@ -195,10 +248,10 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall2();
 
-		Object valueCall2Param1 = MCR.getValueForMethodNameAndCallNumberAndParameterName("addCall2",
-				1, "param2");
-		Object valueCall2Param2 = MCR.getValueForMethodNameAndCallNumberAndParameterName("addCall2",
-				1, "param3");
+		Object valueCall2Param1 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL2,
+				1, PARAM2);
+		Object valueCall2Param2 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL2,
+				1, PARAM3);
 
 		assertEquals(valueCall2Param1, 2);
 		assertSame(valueCall2Param2, objectParameter);
@@ -219,7 +272,7 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall1();
 
-		MCR.assertNumberOfCallsToMethod("addCall1", 10);
+		MCR.assertNumberOfCallsToMethod(ADD_CALL1, 10);
 	}
 
 	@Test
@@ -232,8 +285,8 @@ public class MethodCallRecorderTest {
 		addCall2();
 		boolean errorThrown = false;
 		try {
-			MCR.assertNumberOfCallsToMethod("addCall1", 3);
-			MCR.assertNumberOfCallsToMethod("addCall2", 2);
+			MCR.assertNumberOfCallsToMethod(ADD_CALL1, 3);
+			MCR.assertNumberOfCallsToMethod(ADD_CALL2, 2);
 		} catch (Exception e) {
 			errorThrown = true;
 		}
@@ -244,7 +297,7 @@ public class MethodCallRecorderTest {
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[true\\] but found \\[false\\]")
 	public void testAssertMethodWasCalledMethodNotCalled() throws Exception {
-		MCR.assertMethodWasCalled("someMethod");
+		MCR.assertMethodWasCalled(SOME_METHOD);
 	}
 
 	@Test
@@ -252,8 +305,8 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall2();
 
-		MCR.assertMethodWasCalled("addCall1");
-		MCR.assertMethodWasCalled("addCall2");
+		MCR.assertMethodWasCalled(ADD_CALL1);
+		MCR.assertMethodWasCalled(ADD_CALL2);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
@@ -261,7 +314,7 @@ public class MethodCallRecorderTest {
 	public void testAssertMethodWasNotCalledMethodCalled1() throws Exception {
 		addCall1();
 
-		MCR.assertMethodNotCalled("addCall1");
+		MCR.assertMethodNotCalled(ADD_CALL1);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
@@ -269,7 +322,7 @@ public class MethodCallRecorderTest {
 	public void testAssertMethodWasNotCalledMethodCalled2() throws Exception {
 		addCall2();
 
-		MCR.assertMethodNotCalled("addCall2");
+		MCR.assertMethodNotCalled(ADD_CALL2);
 	}
 
 	@Test
@@ -277,51 +330,57 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall2();
 
-		MCR.assertMethodNotCalled("addCall3");
+		MCR.assertMethodNotCalled(ADD_CALL3);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "MethodName not found for \\(methodName: someMethod, callNumber: 0 and parameterName: someParameterName\\)")
+			+ "MethodName not found for \\(methodName: someMethod, callNumber: 0 "
+			+ "and parameterName: someParameterName\\)")
 	public void testAssertParameterNotFoundMethodName() throws Exception {
-		MCR.assertParameter("someMethod", 0, "someParameterName", "expectedValue");
+		MCR.assertParameter(SOME_METHOD, 0, SOME_PARAMETER_NAME, EXPECTED_VALUE);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "MethodName not found for \\(methodName: someMethod, callNumber: 0 and parameterName: someParameterName\\)")
+			+ "MethodName not found for \\(methodName: someMethod, callNumber: 0 "
+			+ "and parameterName: someParameterName\\)")
 	public void testAssertParameterAsEqualNotFoundMethodName() throws Exception {
-		MCR.assertParameterAsEqual("someMethod", 0, "someParameterName", "expectedValue");
+		MCR.assertParameterAsEqual(SOME_METHOD, 0, SOME_PARAMETER_NAME, EXPECTED_VALUE);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "CallNumber not found for \\(methodName: addCall1, callNumber: 10 and parameterName: someParameterName\\)")
+			+ "CallNumber not found for \\(methodName: addCall1, callNumber: 10 "
+			+ "and parameterName: someParameterName\\)")
 	public void testAssertParameterNotFoundCallNumber() throws Exception {
 		addCall1();
 
-		MCR.assertParameter("addCall1", 10, "someParameterName", "expectedValue");
+		MCR.assertParameter(ADD_CALL1, 10, SOME_PARAMETER_NAME, EXPECTED_VALUE);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "CallNumber not found for \\(methodName: addCall1, callNumber: 10 and parameterName: someParameterName\\)")
+			+ "CallNumber not found for \\(methodName: addCall1, callNumber: 10 "
+			+ "and parameterName: someParameterName\\)")
 	public void testAssertParameterAsEqualNotFoundCallNumber() throws Exception {
 		addCall1();
 
-		MCR.assertParameterAsEqual("addCall1", 10, "someParameterName", "expectedValue");
+		MCR.assertParameterAsEqual(ADD_CALL1, 10, SOME_PARAMETER_NAME, EXPECTED_VALUE);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "ParameterName not found for \\(methodName: addCall1, callNumber: 0 and parameterName: someParameterName\\)")
+			+ "ParameterName not found for \\(methodName: addCall1, callNumber: 0 "
+			+ "and parameterName: someParameterName\\)")
 	public void testAssertParameterNotFoundParamName() throws Exception {
 		addCall1();
 
-		MCR.assertParameter("addCall1", 0, "someParameterName", "expectedValue");
+		MCR.assertParameter(ADD_CALL1, 0, SOME_PARAMETER_NAME, EXPECTED_VALUE);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
-			+ "ParameterName not found for \\(methodName: addCall1, callNumber: 0 and parameterName: someParameterName\\)")
+			+ "ParameterName not found for \\(methodName: addCall1, callNumber: 0 "
+			+ "and parameterName: someParameterName\\)")
 	public void testAssertParameterAsEqualNotFoundParamName() throws Exception {
 		addCall1();
 
-		MCR.assertParameterAsEqual("addCall1", 0, "someParameterName", "expectedValue");
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, SOME_PARAMETER_NAME, EXPECTED_VALUE);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
@@ -329,7 +388,7 @@ public class MethodCallRecorderTest {
 	public void testAssertParameterValueNotEqual() throws Exception {
 		addCall1();
 
-		MCR.assertParameter("addCall1", 0, "param1", 100);
+		MCR.assertParameter(ADD_CALL1, 0, PARAM1, 100);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
@@ -337,7 +396,7 @@ public class MethodCallRecorderTest {
 	public void testAssertParameterAsEqualValueNotEqual() throws Exception {
 		addCall1();
 
-		MCR.assertParameterAsEqual("addCall1", 0, "param1", 100);
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, PARAM1, 100);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
@@ -345,7 +404,7 @@ public class MethodCallRecorderTest {
 	public void testAssertParameterValueDifferentTypes() throws Exception {
 		addCall1();
 
-		MCR.assertParameter("addCall1", 0, "param1", "1");
+		MCR.assertParameter(ADD_CALL1, 0, PARAM1, "1");
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
@@ -353,14 +412,14 @@ public class MethodCallRecorderTest {
 	public void testAssertParameterAsEqualValueDifferentTypes() throws Exception {
 		addCall1();
 
-		MCR.assertParameterAsEqual("addCall1", 0, "param1", "1");
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, PARAM1, "1");
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "expected value type is class java.lang.Integer but found class java.lang.String")
 	public void testAssertParameterValueDifferentTypesDynamicErrorMessage() throws Exception {
 		addCall1();
-		MCR.assertParameter("addCall1", 0, "param2", 2);
+		MCR.assertParameter(ADD_CALL1, 0, PARAM2, 2);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
@@ -368,7 +427,7 @@ public class MethodCallRecorderTest {
 	public void testAssertParameterAsEqualValueDifferentTypesDynamicErrorMessage()
 			throws Exception {
 		addCall1();
-		MCR.assertParameterAsEqual("addCall1", 0, "param2", 2);
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, PARAM2, 2);
 	}
 
 	@Test
@@ -377,18 +436,18 @@ public class MethodCallRecorderTest {
 		addCall2();
 		addCall3();
 
-		MCR.assertParameter("addCall1", 0, "param1", 1);
-		MCR.assertParameter("addCall2", 0, "param3", objectParameter);
-		MCR.assertParameter("addCall3", 0, "param1", 1L);
+		MCR.assertParameter(ADD_CALL1, 0, PARAM1, 1);
+		MCR.assertParameter(ADD_CALL2, 0, PARAM3, objectParameter);
+		MCR.assertParameter(ADD_CALL3, 0, PARAM1, 1L);
 
 		assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject();
 	}
 
 	private void assertParametersForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject() {
-		MCR.assertParameter("addCall1", 0, "param1", Integer.valueOf(1));
-		MCR.assertParameter("addCall3", 0, "param1", Long.valueOf(1));
-		MCR.assertParameter("addCall1", 0, "param2", String.valueOf("2"));
-		MCR.assertParameter("addCall3", 0, "param2", Long.valueOf(A_LONG_TO_BIG_FOR_INT));
+		MCR.assertParameter(ADD_CALL1, 0, PARAM1, Integer.valueOf(1));
+		MCR.assertParameter(ADD_CALL3, 0, PARAM1, Long.valueOf(1));
+		MCR.assertParameter(ADD_CALL1, 0, PARAM2, String.valueOf("2"));
+		MCR.assertParameter(ADD_CALL3, 0, PARAM2, Long.valueOf(A_LONG_TO_BIG_FOR_INT));
 	}
 
 	@Test
@@ -397,60 +456,60 @@ public class MethodCallRecorderTest {
 		addCall2();
 		addCall3();
 
-		MCR.assertParameterAsEqual("addCall1", 0, "param1", 1);
-		MCR.assertParameterAsEqual("addCall2", 0, "param3", objectParameter);
-		MCR.assertParameterAsEqual("addCall3", 0, "param1", 1L);
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, PARAM1, 1);
+		MCR.assertParameterAsEqual(ADD_CALL2, 0, PARAM3, objectParameter);
+		MCR.assertParameterAsEqual(ADD_CALL3, 0, PARAM1, 1L);
 
 		assertParametersAsEqualForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject();
 	}
 
 	private void assertParametersAsEqualForPrimitivesMadeSureTheyAreDifferentObjectsXvalueOfCreatesSameObject() {
-		MCR.assertParameterAsEqual("addCall1", 0, "param1", Integer.valueOf(1));
-		MCR.assertParameterAsEqual("addCall3", 0, "param1", Long.valueOf(1));
-		MCR.assertParameterAsEqual("addCall1", 0, "param2", String.valueOf("2"));
-		MCR.assertParameterAsEqual("addCall3", 0, "param2", Long.valueOf(A_LONG_TO_BIG_FOR_INT));
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, PARAM1, Integer.valueOf(1));
+		MCR.assertParameterAsEqual(ADD_CALL3, 0, PARAM1, Long.valueOf(1));
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, PARAM2, String.valueOf("2"));
+		MCR.assertParameterAsEqual(ADD_CALL3, 0, PARAM2, Long.valueOf(A_LONG_TO_BIG_FOR_INT));
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[45\\] but found \\[1\\]")
 	public void testAssertParameterDifferentint() throws Exception {
 		addCall1();
-		MCR.assertParameter("addCall1", 0, "param1", 45);
+		MCR.assertParameter(ADD_CALL1, 0, PARAM1, 45);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[45\\] but found \\[1\\]")
 	public void testAssertParameterAsEqualDifferentint() throws Exception {
 		addCall1();
-		MCR.assertParameterAsEqual("addCall1", 0, "param1", 45);
+		MCR.assertParameterAsEqual(ADD_CALL1, 0, PARAM1, 45);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[45\\] but found \\[1\\]")
 	public void testAssertParameterDifferentLong() throws Exception {
 		addCall3();
-		MCR.assertParameter("addCall3", 0, "param1", 45L);
+		MCR.assertParameter(ADD_CALL3, 0, PARAM1, 45L);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[45\\] but found \\[1\\]")
 	public void testAssertParameterAsEqualDifferentLong() throws Exception {
 		addCall3();
-		MCR.assertParameterAsEqual("addCall3", 0, "param1", 45L);
+		MCR.assertParameterAsEqual(ADD_CALL3, 0, PARAM1, 45L);
 	}
 
 	@Test(expectedExceptions = AssertionError.class)
 	public void testAssertParameterDifferentObject() throws Exception {
 		addCall2();
 
-		MCR.assertParameter("addCall2", 0, "param3", new Object());
+		MCR.assertParameter(ADD_CALL2, 0, PARAM3, new Object());
 	}
 
 	@Test(expectedExceptions = AssertionError.class)
 	public void testAssertParameterAsEqualDifferentObject() throws Exception {
 		addCall2();
 
-		MCR.assertParameterAsEqual("addCall2", 0, "param3", new Object());
+		MCR.assertParameterAsEqual(ADD_CALL2, 0, PARAM3, new Object());
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
@@ -459,34 +518,33 @@ public class MethodCallRecorderTest {
 			throws Exception {
 		addCall5();
 
-		MCR.assertParameter("addCall5", 0, "param1", new ObjectOnlyForTest(2));
+		MCR.assertParameter("addCall5", 0, PARAM1, new ObjectOnlyForTest(2));
 	}
 
 	private void addCall5() {
-		MCR.addCall("param1", new ObjectOnlyForTest(1));
+		MCR.addCall(PARAM1, new ObjectOnlyForTest(1));
 	}
 
 	@Test
 	public void testAssertParameterAsEqualDifferentObjectButEqualsIsTrue() throws Exception {
 		addObjectOnlyForTestCall();
 
-		MCR.assertParameterAsEqual("addObjectOnlyForTestCall", 0, "param1",
-				new ObjectOnlyForTest(2));
+		MCR.assertParameterAsEqual("addObjectOnlyForTestCall", 0, PARAM1, new ObjectOnlyForTest(2));
 	}
 
 	private void addObjectOnlyForTestCall() {
-		MCR.addCall("param1", new ObjectOnlyForTest(1));
+		MCR.addCall(PARAM1, new ObjectOnlyForTest(1));
 	}
 
 	@Test
 	public void testAssertParameterAsEqualList() throws Exception {
 		addListCall();
 
-		MCR.assertParameterAsEqual("addListCall", 0, "param1", List.of("item1", "item2"));
+		MCR.assertParameterAsEqual("addListCall", 0, PARAM1, List.of(ITEM1, ITEM2));
 	}
 
 	private void addListCall() {
-		MCR.addCall("param1", List.of("item1", "item2"));
+		MCR.addCall(PARAM1, List.of(ITEM1, ITEM2));
 	}
 
 	class ObjectOnlyForTest {
@@ -512,18 +570,18 @@ public class MethodCallRecorderTest {
 			throws Exception {
 		addCallForTest();
 
-		MCRforTest.assertParameters("addCallForTest", 0, "value1", "value2");
+		MCRforTest.assertParameters("addCallForTest", 0, VALUE1, VALUE2);
 
 		assertEquals(MCRforTest.assertParameterCallsCounter, 2);
-		assertEquals(MCRforTest.expectedValue.get(0), "value1");
-		assertEquals(MCRforTest.actualValue.get(0), "value1");
-		assertEquals(MCRforTest.expectedValue.get(1), "value2");
-		assertEquals(MCRforTest.actualValue.get(1), "value2");
+		assertEquals(MCRforTest.expectedValue.get(0), VALUE1);
+		assertEquals(MCRforTest.actualValue.get(0), VALUE1);
+		assertEquals(MCRforTest.expectedValue.get(1), VALUE2);
+		assertEquals(MCRforTest.actualValue.get(1), VALUE2);
 
 	}
 
 	private void addCallForTest() {
-		MCRforTest.addCall("param1", "value1", "param2", "value2", "param3", "value3");
+		MCRforTest.addCall(PARAM1, VALUE1, PARAM2, VALUE2, PARAM3, VALUE3);
 	}
 
 	class MethodCallRecorderForTest extends MethodCallRecorder {
@@ -546,7 +604,7 @@ public class MethodCallRecorderTest {
 			throws Exception {
 		addCall1();
 
-		MCR.assertParameters("addCall1", 0, 1, "2", "valueNotRecorded");
+		MCR.assertParameters(ADD_CALL1, 0, 1, "2", "valueNotRecorded");
 
 	}
 
@@ -555,8 +613,8 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall2();
 
-		MCR.assertParameters("addCall1", 0, 1, "2");
-		MCR.assertParameters("addCall2", 0, 2, objectParameter);
+		MCR.assertParameters(ADD_CALL1, 0, 1, "2");
+		MCR.assertParameters(ADD_CALL2, 0, 2, objectParameter);
 
 	}
 
@@ -566,7 +624,7 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall2();
 
-		MCR.assertParameters("addCall1", 0, 1, "3");
+		MCR.assertParameters(ADD_CALL1, 0, 1, "3");
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
@@ -574,12 +632,12 @@ public class MethodCallRecorderTest {
 	public void testAssertParametersOnlyOneParameter() throws Exception {
 		addCall4();
 
-		MCR.assertParameters("addCall4", 1, "onlyOne");
+		MCR.assertParameters(ADD_CALL4, 1, ONLY_ONE);
 	}
 
 	@Test
 	public void testStoredValueIsNullCheckedNull() throws Exception {
-		MCR.addCall("param1", null);
+		MCR.addCall(PARAM1, null);
 
 		String testValue = null;
 		MCR.assertParameters("testStoredValueIsNullCheckedNull", 0, testValue);
@@ -588,7 +646,7 @@ public class MethodCallRecorderTest {
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[not null\\] but found \\[null\\]")
 	public void testStoredValueIsNullCheckedNotNull() throws Exception {
-		MCR.addCall("param1", null);
+		MCR.addCall(PARAM1, null);
 
 		String testValue = "not null";
 		MCR.assertParameters("testStoredValueIsNullCheckedNotNull", 0, testValue);
@@ -597,7 +655,7 @@ public class MethodCallRecorderTest {
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[null\\] but found \\[not null\\]")
 	public void testStoredValueIsNotNullCheckedNull() throws Exception {
-		MCR.addCall("param1", "not null");
+		MCR.addCall(PARAM1, "not null");
 
 		String testValue = null;
 		MCR.assertParameters("testStoredValueIsNotNullCheckedNull", 0, testValue);
@@ -605,80 +663,106 @@ public class MethodCallRecorderTest {
 
 	@Test
 	public void testAddReturn() throws Exception {
-		String valueToReturn = "someValue";
+		String valueToReturn = SOME_VALUE;
 		MCR.addReturned(valueToReturn);
 
-		assertEquals(MCR.getReturnValue("testAddReturn", 0), "someValue");
+		assertEquals(MCR.getReturnValue("testAddReturn", 0), SOME_VALUE);
 
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "MethodName not found for \\(methodName: someMethod, callNumber: 0\\)")
 	public void testAddReturnNoMethodFound() throws Exception {
-		String valueToReturn = "someValue";
+		String valueToReturn = SOME_VALUE;
 		MCR.addReturned(valueToReturn);
 
-		assertEquals(MCR.getReturnValue("someMethod", 0), "someValue");
+		MCR.getReturnValue(SOME_METHOD, 0);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "MethodName not found for \\(methodName: someMethod2, callNumber: 3\\)")
 	public void testAddReturnNoMethodFound2() throws Exception {
-		String valueToReturn = "someValue3";
+		String valueToReturn = SOME_VALUE3;
 		MCR.addReturned(valueToReturn);
 
-		assertEquals(MCR.getReturnValue("someMethod2", 3), "someValue3");
+		MCR.getReturnValue("someMethod2", 3);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "CallNumber not found for \\(methodName: testAddReturnCallNumberNotFound, callNumber: 10\\)")
 	public void testAddReturnCallNumberNotFound() throws Exception {
-		String valueToReturn = "someValue";
+		String valueToReturn = SOME_VALUE;
 		MCR.addReturned(valueToReturn);
 
-		assertEquals(MCR.getReturnValue("testAddReturnCallNumberNotFound", 10), valueToReturn);
+		MCR.getReturnValue("testAddReturnCallNumberNotFound", 10);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "CallNumber not found for \\(methodName: testAddReturnCallNumberNotFound2, callNumber: 11\\)")
 	public void testAddReturnCallNumberNotFound2() throws Exception {
-		String valueToReturn = "someValue2";
+		String valueToReturn = SOME_VALUE2;
 		MCR.addReturned(valueToReturn);
 
-		assertEquals(MCR.getReturnValue("testAddReturnCallNumberNotFound2", 11), valueToReturn);
+		MCR.getReturnValue("testAddReturnCallNumberNotFound2", 11);
 	}
 
 	@Test
-	public void testAssertReturnPosiveAssertion() throws Exception {
-		String valueToReturn = "someValue";
+	public void testAddGetReturnValues() throws Exception {
+		MCR.addReturned(SOME_VALUE);
+
+		assertEquals(MCR.getReturnValues("testAddGetReturnValues"), List.of(SOME_VALUE));
+	}
+
+	@Test
+	public void testAddGetReturnValuesMoreValues() throws Exception {
+		MCR.addReturned(SOME_VALUE);
+		MCR.addReturned(SOME_VALUE2);
+		MCR.addReturned(SOME_VALUE3);
+
+		assertEquals(MCR.getReturnValues("testAddGetReturnValuesMoreValues"),
+				List.of(SOME_VALUE, SOME_VALUE2, SOME_VALUE3));
+	}
+
+	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
+			+ "MethodName not found for \\(methodName: someMethod\\)")
+	public void testAddGetReturnValuesNoMethodFound() throws Exception {
+		String valueToReturn = SOME_VALUE;
 		MCR.addReturned(valueToReturn);
 
-		MCR.assertReturn("testAssertReturnPosiveAssertion", 0, valueToReturn);
+		MCR.getReturnValues(SOME_METHOD);
+	}
+
+	@Test
+	public void testAssertReturnPositiveAssertion() throws Exception {
+		String valueToReturn = SOME_VALUE;
+		MCR.addReturned(valueToReturn);
+
+		MCR.assertReturn("testAssertReturnPositiveAssertion", 0, valueToReturn);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""
 			+ "expected \\[someOtherValue\\] but found \\[someValue\\]")
 	public void testAssertReturnNegativeAssertion() throws Exception {
-		MCR.addReturned("someValue");
+		MCR.addReturned(SOME_VALUE);
 
-		MCR.assertReturn("testAssertReturnNegativeAssertion", 0, "someOtherValue");
+		MCR.assertReturn("testAssertReturnNegativeAssertion", 0, SOME_OTHER_VALUE);
 	}
 
 	@Test
 	public void testAddReturnedSeveralCalls() throws Exception {
-		MCR.addReturned("someValue1");
-		MCR.addReturned("someValue2");
+		MCR.addReturned(SOME_VALUE1);
+		MCR.addReturned(SOME_VALUE2);
 
-		MCR.assertReturn("testAddReturnedSeveralCalls", 0, "someValue1");
-		MCR.assertReturn("testAddReturnedSeveralCalls", 1, "someValue2");
+		MCR.assertReturn("testAddReturnedSeveralCalls", 0, SOME_VALUE1);
+		MCR.assertReturn("testAddReturnedSeveralCalls", 1, SOME_VALUE2);
 	}
 
 	@Test
 	public void testNoMRVsetThrowsError() throws Exception {
 		Exception caughtException = null;
 		try {
-			MCR.addCallAndReturnFromMRV("paramValue1");
-			assertTrue(false);
+			MCR.addCallAndReturnFromMRV(PARAM_VALUE1);
+			fail("An exception should have been thrown");
 		} catch (Exception e) {
 			caughtException = e;
 		}
@@ -690,31 +774,31 @@ public class MethodCallRecorderTest {
 	@Test
 	public void useMRV() throws Exception {
 		MethodReturnValues MRV = new MethodReturnValues();
-		MRV.setReturnValues("useMRV", List.of("return1"), "paramValue1");
+		MRV.setReturnValues(USE_MRV, List.of(RETURN1), PARAM_VALUE1);
 
 		MCR.useMRV(MRV);
-		Object returnValue = MCR.addCallAndReturnFromMRV("paramName", "paramValue1");
+		Object returnValue = MCR.addCallAndReturnFromMRV(PARAM_NAME, PARAM_VALUE1);
 
-		assertEquals(returnValue, "return1");
-		MCR.assertMethodWasCalled("useMRV");
-		MCR.assertReturn("useMRV", 0, "return1");
-		assertEquals(returnValue, "return1");
+		assertEquals(returnValue, RETURN1);
+		MCR.assertMethodWasCalled(USE_MRV);
+		MCR.assertReturn(USE_MRV, 0, RETURN1);
+		assertEquals(returnValue, RETURN1);
 	}
 
 	@Test
 	public void useMRVWithTwoParameters() throws Exception {
 		MethodReturnValues MRV = new MethodReturnValues();
-		MRV.setReturnValues("useMRVWithTwoParameters", List.of("return1"), "paramValue1",
-				"paramValue2");
+		MRV.setReturnValues("useMRVWithTwoParameters", List.of(RETURN1), PARAM_VALUE1,
+				PARAM_VALUE2);
 
 		MCR.useMRV(MRV);
-		Object returnValue = MCR.addCallAndReturnFromMRV("paramName", "paramValue1", "paramName2",
-				"paramValue2");
+		Object returnValue = MCR.addCallAndReturnFromMRV(PARAM_NAME, PARAM_VALUE1, PARAM_NAME2,
+				PARAM_VALUE2);
 
-		assertEquals(returnValue, "return1");
+		assertEquals(returnValue, RETURN1);
 		MCR.assertMethodWasCalled("useMRVWithTwoParameters");
-		MCR.assertReturn("useMRVWithTwoParameters", 0, "return1");
-		assertEquals(returnValue, "return1");
+		MCR.assertReturn("useMRVWithTwoParameters", 0, RETURN1);
+		assertEquals(returnValue, RETURN1);
 	}
 
 	@Test

@@ -1,3 +1,22 @@
+/*
+ * Copyright 2021, 2022, 2024 Uppsala University Library
+ * Copyright 2024 Olov McKie
+ *
+ * This file is part of Cora.
+ *
+ *     Cora is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Cora is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with Cora.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package se.uu.ub.cora.testutils.mcr;
 
 import static org.testng.Assert.assertEquals;
@@ -6,6 +25,7 @@ import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -144,12 +164,28 @@ public class MethodCallRecorder {
 			List<Object> returnedValuesForMethod = returnedValues.get(methodName);
 			return returnedValuesForMethod.get(callNumber);
 		} catch (NullPointerException ex) {
-			throw new RuntimeException("MethodName not found for (methodName: " + methodName
-					+ CALL_NUMBER_TEXT + callNumber + ")");
+			throw new RuntimeException("MethodName not found for (methodName: %s, callNumber: %s)"
+					.formatted(methodName, callNumber));
 		} catch (IndexOutOfBoundsException ex) {
-			throw new RuntimeException("CallNumber not found for (methodName: " + methodName
-					+ CALL_NUMBER_TEXT + callNumber + ")");
+			throw new RuntimeException("CallNumber not found for (methodName: %s, callNumber: %s)"
+					.formatted(methodName, callNumber));
 		}
+	}
+
+	/**
+	 * getReturnValues is used to get a list of the return values for a specific method
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @return A List with Objects recorded as returned from the method in the order they where
+	 *         returned
+	 */
+	public Collection<Object> getReturnValues(String methodName) {
+		if (!returnedValues.containsKey(methodName)) {
+			throw new RuntimeException(
+					"MethodName not found for (methodName: %s)".formatted(methodName));
+		}
+		return returnedValues.get(methodName);
 	}
 
 	/**
@@ -343,7 +379,7 @@ public class MethodCallRecorder {
 	}
 
 	private void assertNonNullValues(Object expectedValue, Object actualValue) {
-		throwExcpetionWhenDifferentTypes(expectedValue, actualValue);
+		throwExcepetionWhenDifferentTypes(expectedValue, actualValue);
 		if (isStringOrNumber(expectedValue)) {
 			assertEquals(actualValue, expectedValue);
 		} else {
@@ -355,10 +391,10 @@ public class MethodCallRecorder {
 		return null == expectedValue || null == actualValue;
 	}
 
-	private void throwExcpetionWhenDifferentTypes(Object expectedValue, Object value) {
+	private void throwExcepetionWhenDifferentTypes(Object expectedValue, Object value) {
 		if (differentTypes(expectedValue, value)) {
-			String message = "expected value type is " + expectedValue.getClass() + " but found "
-					+ value.getClass();
+			String message = "expected value type is %s but found %s"
+					.formatted(expectedValue.getClass(), value.getClass());
 			throw new RuntimeException(message);
 		}
 	}
@@ -420,7 +456,7 @@ public class MethodCallRecorder {
 
 		Object value = getValueForMethodNameAndCallNumberAndParameterName(methodName, callNumber,
 				parameterName);
-		throwExcpetionWhenDifferentTypes(expectedValue, value);
+		throwExcepetionWhenDifferentTypes(expectedValue, value);
 		assertEquals(value, expectedValue);
 	}
 
@@ -525,4 +561,5 @@ public class MethodCallRecorder {
 	public Object onlyForTestGetMRV() {
 		return MRV;
 	}
+
 }
