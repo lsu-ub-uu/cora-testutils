@@ -25,11 +25,13 @@ import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import se.uu.ub.cora.testutils.mrv.MethodReturnValues;
 
@@ -159,7 +161,6 @@ public class MethodCallRecorder {
 	 * @return An Object with the recorded return value
 	 */
 	public Object getReturnValue(String methodName, int callNumber) {
-
 		try {
 			List<Object> returnedValuesForMethod = returnedValues.get(methodName);
 			return returnedValuesForMethod.get(callNumber);
@@ -203,9 +204,7 @@ public class MethodCallRecorder {
 	 *            An Object with the expected parameter value
 	 */
 	public void assertReturn(String methodName, int callNumber, Object expectedValue) {
-
 		Object value = getReturnValue(methodName, callNumber);
-
 		assertValuesAreEqual(expectedValue, value);
 	}
 
@@ -239,13 +238,11 @@ public class MethodCallRecorder {
 	 */
 	public Map<String, Object> getParametersForMethodAndCallNumber(String methodName,
 			int callNumber) {
-
 		String messageEnd = createNotFoundMessageForMethodNameAndCallNumber(methodName, callNumber)
 				+ ")";
 
 		return getParametersOrThrowErrorForMethodNameAndCallNumber(methodName, callNumber,
 				messageEnd);
-
 	}
 
 	private Map<String, Object> getParametersOrThrowErrorForMethodNameAndCallNumber(
@@ -274,7 +271,6 @@ public class MethodCallRecorder {
 	 */
 	public Object getValueForMethodNameAndCallNumberAndParameterName(String methodName,
 			int callNumber, String parameterName) {
-
 		String messageEnd = createNotFoundMessageForMethodNameAndCallNumberAndParameterName(
 				methodName, callNumber, parameterName);
 
@@ -284,7 +280,6 @@ public class MethodCallRecorder {
 		throwErrorIfParameterNameNotRecorded(parameterName, messageEnd, parameters);
 
 		return parameters.get(parameterName);
-
 	}
 
 	private String createNotFoundMessageForMethodNameAndCallNumberAndParameterName(
@@ -353,6 +348,49 @@ public class MethodCallRecorder {
 			String message = "Too many values to compare for (methodName: " + methodName
 					+ CALL_NUMBER_TEXT + callNumber + ")";
 			throw new RuntimeException(message);
+		}
+	}
+
+	/**
+	 * assertMethodCalledWithParametersReturnFirstCall is used to validate calls to spies and
+	 * similar test helpers. If the specified method has been called with the specified values, is
+	 * the return value for the first matching call returned as an Optional, the Optional is emtpy
+	 * if the return type for the method is void.
+	 * 
+	 * @param methodName
+	 *            A String with the methodName to check parameters for
+	 * @param expectedValues
+	 *            A Varargs Object with the expected parameter values in the order they are used in
+	 *            the method.
+	 * @return An Optional<Object> with the recorded return value
+	 */
+	public Optional<Object> assertMethodCalledWithParametersReturnFirstCall(String methodName,
+			Object... expectedValues) {
+		int position = getPositionOfFirstMatchingCallOrThrowErrorIfNone(methodName, expectedValues);
+		return getReturnValueAsOptionalEmptyForVoidMethods(methodName, position);
+	}
+
+	private int getPositionOfFirstMatchingCallOrThrowErrorIfNone(String methodName,
+			Object... expectedValues) {
+		int size = calledMethods.get(methodName).size();
+		for (int i = 0; i < size; i++) {
+			try {
+				assertParameters(methodName, i, expectedValues);
+				return i;
+			} catch (AssertionError e) {
+				// Try to match next recorded call
+			}
+		}
+		String message = "Method %s not called with values: %s".formatted(methodName,
+				Arrays.toString(expectedValues));
+		throw new AssertionError(message);
+	}
+
+	private Optional<Object> getReturnValueAsOptionalEmptyForVoidMethods(String methodName, int i) {
+		try {
+			return Optional.of(getReturnValue(methodName, i));
+		} catch (Exception e) {
+			return Optional.empty();
 		}
 	}
 
@@ -432,7 +470,6 @@ public class MethodCallRecorder {
 	 */
 	public void assertParameter(String methodName, int callNumber, String parameterName,
 			Object expectedValue) {
-
 		Object value = getValueForMethodNameAndCallNumberAndParameterName(methodName, callNumber,
 				parameterName);
 
@@ -453,7 +490,6 @@ public class MethodCallRecorder {
 	 */
 	public void assertParameterAsEqual(String methodName, int callNumber, String parameterName,
 			Object expectedValue) {
-
 		Object value = getValueForMethodNameAndCallNumberAndParameterName(methodName, callNumber,
 				parameterName);
 		throwExcepetionWhenDifferentTypes(expectedValue, value);
