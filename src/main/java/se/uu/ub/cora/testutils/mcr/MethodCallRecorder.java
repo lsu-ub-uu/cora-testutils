@@ -366,6 +366,8 @@ public class MethodCallRecorder {
 	 */
 	public Optional<Object> assertMethodCalledWithParametersReturnFirstCall(String methodName,
 			Object... expectedValues) {
+		// TODO: split into two methods one only assert and one assert and return to avoid optional
+		// return
 		int position = getPositionOfFirstMatchingCallOrThrowErrorIfNone(methodName, expectedValues);
 		return getReturnValueAsOptionalEmptyForVoidMethods(methodName, position);
 	}
