@@ -606,7 +606,7 @@ public class MethodCallRecorderTest {
 		addCallForTest2();
 		addCallForTest2();
 		addCallForTest2();
-		MCRforTestACP.setThrowsError(List.of(false, false, false));
+		MCRforTestACP.setThrowsError(List.of("none", "none", "none"));
 
 		try {
 			MCRforTestACP.assertCalledParameters(methodName, VALUE1, VALUE2, VALUE3);
@@ -629,7 +629,7 @@ public class MethodCallRecorderTest {
 		addCallForTest2();
 		addCallForTest2();
 		addCallForTest2();
-		MCRforTestACP.setThrowsError(List.of(true, true, false));
+		MCRforTestACP.setThrowsError(List.of("assertion", "runtime", "none"));
 
 		try {
 			MCRforTestACP.assertCalledParameters(methodName, VALUE1, VALUE2, VALUE3);
@@ -660,7 +660,7 @@ public class MethodCallRecorderTest {
 		addCallForTest2();
 		addCallForTest2();
 		addCallForTest2();
-		MCRforTestACP.setThrowsError(List.of(true, true, true));
+		MCRforTestACP.setThrowsError(List.of("assertion", "runtime", "runtime"));
 
 		try {
 			MCRforTestACP.assertCalledParameters(methodName, VALUE1, VALUE2, VALUE3);
@@ -694,7 +694,7 @@ public class MethodCallRecorderTest {
 		addCallForTest2();
 		addCallForTest2();
 		addCallForTest2();
-		MCRforTestACP.setThrowsError(List.of(false, false, false));
+		MCRforTestACP.setThrowsError(List.of("none", "none", "none"));
 
 		try {
 			Object returnValue = MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1,
@@ -719,7 +719,7 @@ public class MethodCallRecorderTest {
 		addCallForTest2NoReturnValue();
 		addCallForTest2NoReturnValue();
 		addCallForTest2NoReturnValue();
-		MCRforTestACP.setThrowsError(List.of(false, false, false));
+		MCRforTestACP.setThrowsError(List.of("none", "none", "none"));
 
 		try {
 			MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1, VALUE2, VALUE3);
@@ -746,7 +746,7 @@ public class MethodCallRecorderTest {
 		addCallForTest2();
 		addCallForTest2();
 		addCallForTest2();
-		MCRforTestACP.setThrowsError(List.of(true, true, false));
+		MCRforTestACP.setThrowsError(List.of("assertion", "runtime", "none"));
 
 		try {
 			Object returnValue = MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1,
@@ -779,7 +779,7 @@ public class MethodCallRecorderTest {
 		addCallForTest2();
 		addCallForTest2();
 		addCallForTest2();
-		MCRforTestACP.setThrowsError(List.of(true, true, true));
+		MCRforTestACP.setThrowsError(List.of("assertion", "runtime", "runtime"));
 
 		try {
 			MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1, VALUE2, VALUE3);
@@ -811,7 +811,7 @@ public class MethodCallRecorderTest {
 		List<String> methodNames = new ArrayList<>();
 		private List<Integer> callNumbers = new ArrayList<>();;
 		private List<Object> expectedValues = new ArrayList<>();
-		private List<Boolean> throwErrors = List.of(false);
+		private List<String> throwErrors = List.of("none");
 
 		@Override
 		public void assertParameters(String methodName, int callNumber, Object... expectedValues) {
@@ -819,12 +819,16 @@ public class MethodCallRecorderTest {
 			this.callNumbers.add(callNumber);
 			this.expectedValues.add(expectedValues);
 			assertParametersCallsCounter++;
-			if (throwErrors.get(callNumber)) {
+			String typeToThrow = throwErrors.get(callNumber);
+			if (typeToThrow.equals("assertion")) {
 				throw new AssertionError("Error from MethodCallRecorderForTest2");
+			}
+			if (typeToThrow.equals("runtime")) {
+				throw new RuntimeException("Error from MethodCallRecorderForTest2");
 			}
 		}
 
-		public void setThrowsError(List<Boolean> throwErrors) {
+		public void setThrowsError(List<String> throwErrors) {
 			this.throwErrors = throwErrors;
 		}
 	}

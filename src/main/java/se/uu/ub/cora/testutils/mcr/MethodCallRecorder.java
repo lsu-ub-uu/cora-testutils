@@ -404,7 +404,7 @@ public class MethodCallRecorder {
 			try {
 				assertParameters(methodName, i, expectedValues);
 				return i;
-			} catch (AssertionError e) {
+			} catch (AssertionError | RuntimeException e) {
 				// Try to match next recorded call
 			}
 		}
