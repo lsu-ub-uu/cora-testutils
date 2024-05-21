@@ -73,12 +73,14 @@ public class MethodCallRecorderTest {
 	private static final long A_LONG_TO_BIG_FOR_INT = 3147483647L;
 	MethodCallRecorder MCR;
 	private Object objectParameter = new Object();
-	private MethodCallRecorderForTest MCRforTest;
+	private MethodCallRecorderOnlyForTestAssertValues MCRforTestAV;
+	private MethodCallRecorderOnlyForTestAssertCalledParameters MCRforTestACP;
 
 	@BeforeMethod
 	public void beforeMethod() {
 		MCR = new MethodCallRecorder();
-		MCRforTest = new MethodCallRecorderForTest();
+		MCRforTestAV = new MethodCallRecorderOnlyForTestAssertValues();
+		MCRforTestACP = new MethodCallRecorderOnlyForTestAssertCalledParameters();
 	}
 
 	@Test
@@ -570,22 +572,21 @@ public class MethodCallRecorderTest {
 			throws Exception {
 		addCallForTest();
 
-		MCRforTest.assertParameters("addCallForTest", 0, VALUE1, VALUE2);
+		MCRforTestAV.assertParameters("addCallForTest", 0, VALUE1, VALUE2);
 
-		assertEquals(MCRforTest.assertParameterCallsCounter, 2);
-		assertEquals(MCRforTest.expectedValue.get(0), VALUE1);
-		assertEquals(MCRforTest.actualValue.get(0), VALUE1);
-		assertEquals(MCRforTest.expectedValue.get(1), VALUE2);
-		assertEquals(MCRforTest.actualValue.get(1), VALUE2);
+		assertEquals(MCRforTestAV.assertParameterCallsCounter, 2);
+		assertEquals(MCRforTestAV.expectedValue.get(0), VALUE1);
+		assertEquals(MCRforTestAV.actualValue.get(0), VALUE1);
+		assertEquals(MCRforTestAV.expectedValue.get(1), VALUE2);
+		assertEquals(MCRforTestAV.actualValue.get(1), VALUE2);
 
 	}
 
 	private void addCallForTest() {
-		MCRforTest.addCall(PARAM1, VALUE1, PARAM2, VALUE2, PARAM3, VALUE3);
+		MCRforTestAV.addCall(PARAM1, VALUE1, PARAM2, VALUE2, PARAM3, VALUE3);
 	}
 
-	class MethodCallRecorderForTest extends MethodCallRecorder {
-
+	class MethodCallRecorderOnlyForTestAssertValues extends MethodCallRecorder {
 		int assertParameterCallsCounter = 0;
 		private List<Object> expectedValue = new ArrayList<>();
 		private List<Object> actualValue = new ArrayList<>();;
@@ -596,6 +597,245 @@ public class MethodCallRecorderTest {
 			this.actualValue.add(actualValue);
 			assertParameterCallsCounter++;
 		}
+	}
+
+	@Test
+	public void testAssertCalledParametersCallsAssertParametersForAllAnswersThreeCalls()
+			throws Exception {
+		String methodName = "addCallForTest2";
+		addCallForTest2();
+		addCallForTest2();
+		addCallForTest2();
+		MCRforTestACP.setThrowsError(List.of(false, false, false));
+
+		try {
+			MCRforTestACP.assertCalledParameters(methodName, VALUE1, VALUE2, VALUE3);
+		} catch (Exception e) {
+			fail();
+		}
+
+		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
+		assertEquals(MCRforTestACP.assertParametersCallsCounter, 1);
+
+		assertEquals(MCRforTestACP.methodNames.get(0), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(0), 0);
+		assertEquals(MCRforTestACP.expectedValues.get(0), value);
+	}
+
+	@Test
+	public void testAssertCalledParametersCallsAssertParametersForAllAnswersThreeCallsOneAndTwoFails()
+			throws Exception {
+		String methodName = "addCallForTest2";
+		addCallForTest2();
+		addCallForTest2();
+		addCallForTest2();
+		MCRforTestACP.setThrowsError(List.of(true, true, false));
+
+		try {
+			MCRforTestACP.assertCalledParameters(methodName, VALUE1, VALUE2, VALUE3);
+		} catch (Exception e) {
+			fail();
+		}
+
+		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
+		assertEquals(MCRforTestACP.assertParametersCallsCounter, 3);
+
+		assertEquals(MCRforTestACP.methodNames.get(0), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(0), 0);
+		assertEquals(MCRforTestACP.expectedValues.get(0), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(1), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(1), 1);
+		assertEquals(MCRforTestACP.expectedValues.get(1), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(2), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(2), 2);
+		assertEquals(MCRforTestACP.expectedValues.get(2), value);
+	}
+
+	@Test
+	public void testAssertCalledParametersCallsAssertParametersForAllAnswersThreeCallsAllFails()
+			throws Exception {
+		String methodName = "addCallForTest2";
+		addCallForTest2();
+		addCallForTest2();
+		addCallForTest2();
+		MCRforTestACP.setThrowsError(List.of(true, true, true));
+
+		try {
+			MCRforTestACP.assertCalledParameters(methodName, VALUE1, VALUE2, VALUE3);
+			fail();
+		} catch (Error e) {
+			assertTrue(e instanceof AssertionError);
+			assertEquals(e.getMessage(),
+					"Method: " + methodName + " not called with values: [value1, value2, value3]");
+		}
+
+		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
+		assertEquals(MCRforTestACP.assertParametersCallsCounter, 3);
+
+		assertEquals(MCRforTestACP.methodNames.get(0), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(0), 0);
+		assertEquals(MCRforTestACP.expectedValues.get(0), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(1), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(1), 1);
+		assertEquals(MCRforTestACP.expectedValues.get(1), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(2), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(2), 2);
+		assertEquals(MCRforTestACP.expectedValues.get(2), value);
+	}
+
+	@Test
+	public void testAssertCalledParametersReturnCallsAssertParametersForAllAnswersThreeCalls()
+			throws Exception {
+		String methodName = "addCallForTest2";
+		addCallForTest2();
+		addCallForTest2();
+		addCallForTest2();
+		MCRforTestACP.setThrowsError(List.of(false, false, false));
+
+		try {
+			Object returnValue = MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1,
+					VALUE2, VALUE3);
+			assertSame(MCRforTestACP.getReturnValue(methodName, 0), returnValue);
+		} catch (Exception e) {
+			fail();
+		}
+
+		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
+		assertEquals(MCRforTestACP.assertParametersCallsCounter, 1);
+
+		assertEquals(MCRforTestACP.methodNames.get(0), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(0), 0);
+		assertEquals(MCRforTestACP.expectedValues.get(0), value);
+	}
+
+	@Test
+	public void testAssertCalledParametersReturnCallsAssertParametersForAllAnswersThreeCallsNoReturnValue()
+			throws Exception {
+		String methodName = "addCallForTest2NoReturnValue";
+		addCallForTest2NoReturnValue();
+		addCallForTest2NoReturnValue();
+		addCallForTest2NoReturnValue();
+		MCRforTestACP.setThrowsError(List.of(false, false, false));
+
+		try {
+			MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1, VALUE2, VALUE3);
+			fail();
+		} catch (Exception e) {
+			// fail();
+			assertTrue(e instanceof RuntimeException);
+			assertEquals(e.getMessage(), "No return value found for method: " + methodName
+					+ " called with values: [value1, value2, value3]");
+		}
+
+		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
+		assertEquals(MCRforTestACP.assertParametersCallsCounter, 1);
+
+		assertEquals(MCRforTestACP.methodNames.get(0), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(0), 0);
+		assertEquals(MCRforTestACP.expectedValues.get(0), value);
+	}
+
+	@Test
+	public void testAssertCalledParametersReturnCallsAssertParametersForAllAnswersThreeCallsOneAndTwoFails()
+			throws Exception {
+		String methodName = "addCallForTest2";
+		addCallForTest2();
+		addCallForTest2();
+		addCallForTest2();
+		MCRforTestACP.setThrowsError(List.of(true, true, false));
+
+		try {
+			Object returnValue = MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1,
+					VALUE2, VALUE3);
+			assertSame(MCRforTestACP.getReturnValue(methodName, 0), returnValue);
+		} catch (Exception e) {
+			fail();
+		}
+
+		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
+		assertEquals(MCRforTestACP.assertParametersCallsCounter, 3);
+
+		assertEquals(MCRforTestACP.methodNames.get(0), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(0), 0);
+		assertEquals(MCRforTestACP.expectedValues.get(0), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(1), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(1), 1);
+		assertEquals(MCRforTestACP.expectedValues.get(1), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(2), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(2), 2);
+		assertEquals(MCRforTestACP.expectedValues.get(2), value);
+	}
+
+	@Test
+	public void testAssertCalledParametersReturnCallsAssertParametersForAllAnswersThreeCallsAllFails()
+			throws Exception {
+		String methodName = "addCallForTest2";
+		addCallForTest2();
+		addCallForTest2();
+		addCallForTest2();
+		MCRforTestACP.setThrowsError(List.of(true, true, true));
+
+		try {
+			MCRforTestACP.assertCalledParametersReturn(methodName, VALUE1, VALUE2, VALUE3);
+			fail();
+		} catch (Error e) {
+			assertTrue(e instanceof AssertionError);
+			assertEquals(e.getMessage(),
+					"Method: " + methodName + " not called with values: [value1, value2, value3]");
+		}
+
+		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
+		assertEquals(MCRforTestACP.assertParametersCallsCounter, 3);
+
+		assertEquals(MCRforTestACP.methodNames.get(0), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(0), 0);
+		assertEquals(MCRforTestACP.expectedValues.get(0), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(1), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(1), 1);
+		assertEquals(MCRforTestACP.expectedValues.get(1), value);
+
+		assertEquals(MCRforTestACP.methodNames.get(2), methodName);
+		assertEquals(MCRforTestACP.callNumbers.get(2), 2);
+		assertEquals(MCRforTestACP.expectedValues.get(2), value);
+	}
+
+	class MethodCallRecorderOnlyForTestAssertCalledParameters extends MethodCallRecorder {
+		int assertParametersCallsCounter = 0;
+		List<String> methodNames = new ArrayList<>();
+		private List<Integer> callNumbers = new ArrayList<>();;
+		private List<Object> expectedValues = new ArrayList<>();
+		private List<Boolean> throwErrors = List.of(false);
+
+		@Override
+		public void assertParameters(String methodName, int callNumber, Object... expectedValues) {
+			this.methodNames.add(methodName);
+			this.callNumbers.add(callNumber);
+			this.expectedValues.add(expectedValues);
+			assertParametersCallsCounter++;
+			if (throwErrors.get(callNumber)) {
+				throw new AssertionError("Error from MethodCallRecorderForTest2");
+			}
+		}
+
+		public void setThrowsError(List<Boolean> throwErrors) {
+			this.throwErrors = throwErrors;
+		}
+	}
+
+	private void addCallForTest2() {
+		MCRforTestACP.addCall(PARAM1, VALUE1, PARAM2, VALUE2, PARAM3, VALUE3);
+		MCRforTestACP.addReturned("someReturnValue");
+	}
+
+	private void addCallForTest2NoReturnValue() {
+		MCRforTestACP.addCall(PARAM1, VALUE1, PARAM2, VALUE2, PARAM3, VALUE3);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
