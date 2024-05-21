@@ -29,7 +29,6 @@ import static org.testng.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -669,7 +668,7 @@ public class MethodCallRecorderTest {
 		} catch (Error e) {
 			assertTrue(e instanceof AssertionError);
 			assertEquals(e.getMessage(),
-					"Method " + methodName + " not called with values: [value1, value2, value3]");
+					"Method: " + methodName + " not called with values: [value1, value2, value3]");
 		}
 
 		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
@@ -698,10 +697,9 @@ public class MethodCallRecorderTest {
 		MCRforTest2.setThrowsError(List.of(false, false, false));
 
 		try {
-			Optional<Object> returnValue = MCRforTest2
-					.assertMethodCalledWithParametersReturnFirstCall(methodName, VALUE1, VALUE2,
-							VALUE3);
-			assertSame(MCRforTest2.getReturnValue(methodName, 0), returnValue.get());
+			Object returnValue = MCRforTest2.assertMethodCalledWithParametersReturnFirstCall(
+					methodName, VALUE1, VALUE2, VALUE3);
+			assertSame(MCRforTest2.getReturnValue(methodName, 0), returnValue);
 		} catch (Exception e) {
 			fail();
 		}
@@ -724,12 +722,14 @@ public class MethodCallRecorderTest {
 		MCRforTest2.setThrowsError(List.of(false, false, false));
 
 		try {
-			Optional<Object> returnValue = MCRforTest2
-					.assertMethodCalledWithParametersReturnFirstCall(methodName, VALUE1, VALUE2,
-							VALUE3);
-			assertTrue(returnValue.isEmpty());
-		} catch (Exception e) {
+			MCRforTest2.assertMethodCalledWithParametersReturnFirstCall(methodName, VALUE1, VALUE2,
+					VALUE3);
 			fail();
+		} catch (Exception e) {
+			// fail();
+			assertTrue(e instanceof RuntimeException);
+			assertEquals(e.getMessage(), "No return value found for method: " + methodName
+					+ " called with values: [value1, value2, value3]");
 		}
 
 		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };
@@ -750,10 +750,9 @@ public class MethodCallRecorderTest {
 		MCRforTest2.setThrowsError(List.of(true, true, false));
 
 		try {
-			Optional<Object> returnValue = MCRforTest2
-					.assertMethodCalledWithParametersReturnFirstCall(methodName, VALUE1, VALUE2,
-							VALUE3);
-			assertSame(MCRforTest2.getReturnValue(methodName, 0), returnValue.get());
+			Object returnValue = MCRforTest2.assertMethodCalledWithParametersReturnFirstCall(
+					methodName, VALUE1, VALUE2, VALUE3);
+			assertSame(MCRforTest2.getReturnValue(methodName, 0), returnValue);
 		} catch (Exception e) {
 			fail();
 		}
@@ -790,7 +789,7 @@ public class MethodCallRecorderTest {
 		} catch (Error e) {
 			assertTrue(e instanceof AssertionError);
 			assertEquals(e.getMessage(),
-					"Method " + methodName + " not called with values: [value1, value2, value3]");
+					"Method: " + methodName + " not called with values: [value1, value2, value3]");
 		}
 
 		String[] value = new String[] { VALUE1, VALUE2, VALUE3 };

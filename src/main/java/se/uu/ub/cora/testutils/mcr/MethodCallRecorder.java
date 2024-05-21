@@ -355,6 +355,10 @@ public class MethodCallRecorder {
 	 * assertMethodCalledWithParameters is used to validate calls to spies and similar test helpers.
 	 * If the specified method has not been called at least once with the specified values vill the
 	 * assertion fail.
+	 * <p>
+	 * If the called method return values and you are intrested in the returned answer use
+	 * {@link MethodCallRecorder#assertMethodCalledWithParametersReturnFirstCall(String, Object...)}
+	 * instead.
 	 * 
 	 * @param methodName
 	 *            A String with the methodName to check parameters for
@@ -370,22 +374,29 @@ public class MethodCallRecorder {
 	 * assertMethodCalledWithParametersReturnFirstCall is used to validate calls to spies and
 	 * similar test helpers. If the specified method has not been called at least once with the
 	 * specified values vill the assertion fail. If the specified method has been called with the
-	 * specified values, is the return value for the first matching call returned as an Optional,
-	 * the Optional is emtpy if the return type for the method is void.
+	 * specified values, is the return value for the first matching call returned.
+	 * <p>
+	 * If the called method does not return any values use
+	 * {@link MethodCallRecorder#assertMethodCalledWithParameters(String, Object...)} instead.
 	 * 
 	 * @param methodName
 	 *            A String with the methodName to check parameters for
 	 * @param expectedValues
 	 *            A Varargs Object with the expected parameter values in the order they are used in
 	 *            the method.
-	 * @return An Optional<Object> with the recorded return value
+	 * @return An Object with the first recorded return value
 	 */
-	public Optional<Object> assertMethodCalledWithParametersReturnFirstCall(String methodName,
+	public Object assertMethodCalledWithParametersReturnFirstCall(String methodName,
 			Object... expectedValues) {
-		// TODO: split into two methods one only assert and one assert and return to avoid optional
-		// return
 		int position = getPositionOfFirstMatchingCallOrThrowErrorIfNone(methodName, expectedValues);
-		return getReturnValueAsOptionalEmptyForVoidMethods(methodName, position);
+		Optional<Object> returnObject = getReturnValueOrThrowAnExceptionIfNoReturnValueExisits(
+				methodName, position);
+		if (returnObject.isPresent()) {
+			return returnObject.get();
+		}
+		String message = "No return value found for method: %s called with values: %s"
+				.formatted(methodName, Arrays.toString(expectedValues));
+		throw new RuntimeException(message);
 	}
 
 	private int getPositionOfFirstMatchingCallOrThrowErrorIfNone(String methodName,
@@ -399,12 +410,13 @@ public class MethodCallRecorder {
 				// Try to match next recorded call
 			}
 		}
-		String message = "Method %s not called with values: %s".formatted(methodName,
+		String message = "Method: %s not called with values: %s".formatted(methodName,
 				Arrays.toString(expectedValues));
 		throw new AssertionError(message);
 	}
 
-	private Optional<Object> getReturnValueAsOptionalEmptyForVoidMethods(String methodName, int i) {
+	private Optional<Object> getReturnValueOrThrowAnExceptionIfNoReturnValueExisits(
+			String methodName, int i) {
 		try {
 			return Optional.of(getReturnValue(methodName, i));
 		} catch (Exception e) {
