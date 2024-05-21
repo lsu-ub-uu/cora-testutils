@@ -7,14 +7,14 @@
 	</parent>
 
 	<artifactId>testutils</artifactId>
-	<version>1.13.0</version>
+	<version>1.13.1-SNAPSHOT</version>
 	<name>testutils</name>
 
 	<scm>
 		<connection>scm:git:https://github.com/lsu-ub-uu/cora-testutils.git</connection>
 		<developerConnection>scm:git:https://github.com/lsu-ub-uu/cora-testutils.git</developerConnection>
 		<url>https://github.com/lsu-ub-uu/cora-testutils.git</url>
-		<tag>testutils-1.13.0</tag>
+		<tag>release/1.13</tag>
 	</scm>
 
 	<dependencies>
