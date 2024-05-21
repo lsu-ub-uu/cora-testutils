@@ -352,13 +352,12 @@ public class MethodCallRecorder {
 	}
 
 	/**
-	 * assertMethodCalledWithParameters is used to validate calls to spies and similar test helpers.
-	 * If the specified method has not been called at least once with the specified values vill the
+	 * assertCalledParameters is used to validate calls to spies and similar test helpers. If the
+	 * specified method has not been called at least once with the specified values vill the
 	 * assertion fail.
 	 * <p>
 	 * If the called method return values and you are intrested in the returned answer use
-	 * {@link MethodCallRecorder#assertMethodCalledWithParametersReturnFirstCall(String, Object...)}
-	 * instead.
+	 * {@link MethodCallRecorder#assertCalledParametersReturn(String, Object...)} instead.
 	 * 
 	 * @param methodName
 	 *            A String with the methodName to check parameters for
@@ -366,18 +365,18 @@ public class MethodCallRecorder {
 	 *            A Varargs Object with the expected parameter values in the order they are used in
 	 *            the method.
 	 */
-	public void assertMethodCalledWithParameters(String methodName, Object... expectedValues) {
+	public void assertCalledParameters(String methodName, Object... expectedValues) {
 		getPositionOfFirstMatchingCallOrThrowErrorIfNone(methodName, expectedValues);
 	}
 
 	/**
-	 * assertMethodCalledWithParametersReturnFirstCall is used to validate calls to spies and
-	 * similar test helpers. If the specified method has not been called at least once with the
-	 * specified values vill the assertion fail. If the specified method has been called with the
-	 * specified values, is the return value for the first matching call returned.
+	 * assertCalledParametersReturn is used to validate calls to spies and similar test helpers. If
+	 * the specified method has not been called at least once with the specified values vill the
+	 * assertion fail. If the specified method has been called with the specified values, is the
+	 * return value for the first matching call returned.
 	 * <p>
 	 * If the called method does not return any values use
-	 * {@link MethodCallRecorder#assertMethodCalledWithParameters(String, Object...)} instead.
+	 * {@link MethodCallRecorder#assertCalledParameters(String, Object...)} instead.
 	 * 
 	 * @param methodName
 	 *            A String with the methodName to check parameters for
@@ -386,8 +385,7 @@ public class MethodCallRecorder {
 	 *            the method.
 	 * @return An Object with the first recorded return value
 	 */
-	public Object assertMethodCalledWithParametersReturnFirstCall(String methodName,
-			Object... expectedValues) {
+	public Object assertCalledParametersReturn(String methodName, Object... expectedValues) {
 		int position = getPositionOfFirstMatchingCallOrThrowErrorIfNone(methodName, expectedValues);
 		Optional<Object> returnObject = getReturnValueOrThrowAnExceptionIfNoReturnValueExisits(
 				methodName, position);
