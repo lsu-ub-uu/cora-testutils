@@ -352,10 +352,26 @@ public class MethodCallRecorder {
 	}
 
 	/**
+	 * assertMethodCalledWithParameters is used to validate calls to spies and similar test helpers.
+	 * If the specified method has not been called at least once with the specified values vill the
+	 * assertion fail.
+	 * 
+	 * @param methodName
+	 *            A String with the methodName to check parameters for
+	 * @param expectedValues
+	 *            A Varargs Object with the expected parameter values in the order they are used in
+	 *            the method.
+	 */
+	public void assertMethodCalledWithParameters(String methodName, Object... expectedValues) {
+		getPositionOfFirstMatchingCallOrThrowErrorIfNone(methodName, expectedValues);
+	}
+
+	/**
 	 * assertMethodCalledWithParametersReturnFirstCall is used to validate calls to spies and
-	 * similar test helpers. If the specified method has been called with the specified values, is
-	 * the return value for the first matching call returned as an Optional, the Optional is emtpy
-	 * if the return type for the method is void.
+	 * similar test helpers. If the specified method has not been called at least once with the
+	 * specified values vill the assertion fail. If the specified method has been called with the
+	 * specified values, is the return value for the first matching call returned as an Optional,
+	 * the Optional is emtpy if the return type for the method is void.
 	 * 
 	 * @param methodName
 	 *            A String with the methodName to check parameters for
