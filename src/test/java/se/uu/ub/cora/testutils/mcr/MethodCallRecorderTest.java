@@ -206,38 +206,38 @@ public class MethodCallRecorderTest {
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "MethodName not found for \\(methodName: methodName, callNumber: 0 "
 			+ "and parameterName: parameterName\\)")
-	public void testGetValueForMethodNameAndCallNumberAndParameterNameNoMatch() throws Exception {
-		MCR.getValueForMethodNameAndCallNumberAndParameterName("methodName", 0, PARAMETER_NAME);
+	public void testgetParameterForMethodAndCallNumberAndParameterNoMatch() throws Exception {
+		MCR.getParameterForMethodAndCallNumberAndParameter("methodName", 0, PARAMETER_NAME);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "MethodName not found for \\(methodName: addCall, callNumber: 10 "
 			+ "and parameterName: parameterName\\)")
-	public void testGetValueForMethodNameAndCallNumberAndParameterNameCallNumberNoMatch()
+	public void testgetParameterForMethodAndCallNumberAndParameterCallNumberNoMatch()
 			throws Exception {
 		addCall1();
 
-		MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL, 10, PARAMETER_NAME);
+		MCR.getParameterForMethodAndCallNumberAndParameter(ADD_CALL, 10, PARAMETER_NAME);
 	}
 
 	@Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ""
 			+ "MethodName not found for \\(methodName: addCall, callNumber: 0 "
 			+ "and parameterName: parameterName\\)")
-	public void testGetValueForMethodNameAndCallNumberAndParameterNameParameterNameNoMatch()
+	public void testgetParameterForMethodAndCallNumberAndParameterParameterNameNoMatch()
 			throws Exception {
 		addCall1();
 
-		MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL, 0, PARAMETER_NAME);
+		MCR.getParameterForMethodAndCallNumberAndParameter(ADD_CALL, 0, PARAMETER_NAME);
 	}
 
 	@Test
 	public void testNameOneCall() throws Exception {
 		addCall1();
 
-		Object valueCall1Param1 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL1,
-				0, PARAM1);
-		Object valueCall1Param2 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL1,
-				0, PARAM2);
+		Object valueCall1Param1 = MCR.getParameterForMethodAndCallNumberAndParameter(ADD_CALL1, 0,
+				PARAM1);
+		Object valueCall1Param2 = MCR.getParameterForMethodAndCallNumberAndParameter(ADD_CALL1, 0,
+				PARAM2);
 
 		assertEquals(valueCall1Param1, 1);
 		assertEquals(valueCall1Param2, "2");
@@ -250,13 +250,42 @@ public class MethodCallRecorderTest {
 		addCall1();
 		addCall2();
 
-		Object valueCall2Param1 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL2,
-				1, PARAM2);
-		Object valueCall2Param2 = MCR.getValueForMethodNameAndCallNumberAndParameterName(ADD_CALL2,
-				1, PARAM3);
+		Object valueCall2Param1 = MCR.getParameterForMethodAndCallNumberAndParameter(ADD_CALL2, 1,
+				PARAM2);
+		Object valueCall2Param2 = MCR.getParameterForMethodAndCallNumberAndParameter(ADD_CALL2, 1,
+				PARAM3);
 
 		assertEquals(valueCall2Param1, 2);
 		assertSame(valueCall2Param2, objectParameter);
+	}
+
+	@Test
+	public void getValueForMethodNameAndCallNumberAndParameterNameCallsTheNewMethod()
+			throws Exception {
+		class OnlyForTestMethodCallRecorder extends MethodCallRecorder {
+			public MethodCallRecorder MCR = new MethodCallRecorder();
+			public MethodReturnValues MRV = new MethodReturnValues();
+
+			public OnlyForTestMethodCallRecorder() {
+				MCR.useMRV(MRV);
+				MRV.setDefaultReturnValuesSupplier("getParameterForMethodAndCallNumberAndParameter",
+						() -> "someValue");
+			}
+
+			@Override
+			public Object getParameterForMethodAndCallNumberAndParameter(String methodName,
+					int callNumber, String parameterName) {
+				return MCR.addCallAndReturnFromMRV("methodName", methodName, "callNumber",
+						callNumber, "parameterName", parameterName);
+			}
+		}
+		OnlyForTestMethodCallRecorder onlyForTestMCR = new OnlyForTestMethodCallRecorder();
+
+		onlyForTestMCR.getValueForMethodNameAndCallNumberAndParameterName("methodName", 0,
+				PARAMETER_NAME);
+
+		onlyForTestMCR.MCR.assertParameters("getParameterForMethodAndCallNumberAndParameter", 0,
+				"methodName", 0, PARAMETER_NAME);
 	}
 
 	@Test(expectedExceptions = AssertionError.class, expectedExceptionsMessageRegExp = ""

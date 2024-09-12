@@ -268,9 +268,34 @@ public class MethodCallRecorder {
 	 * @param parameterName
 	 *            A String with the parameter name to get the value for
 	 * @return An Object with the recorded value
+	 * @deprecated use method
+	 *             {@link #getParameterForMethodAndCallNumberAndParameter(String, int, String)}
+	 *             instead
 	 */
+	@Deprecated
 	public Object getValueForMethodNameAndCallNumberAndParameterName(String methodName,
 			int callNumber, String parameterName) {
+		return getParameterForMethodAndCallNumberAndParameter(methodName, callNumber,
+				parameterName);
+	}
+
+	/**
+	 * getParameterForMethodAndCallNumberAndParameter is used to get the value for a specific method
+	 * calls specified parameter
+	 * <p>
+	 * If no value is recorded for the specified method, callNumber and parameterName will a runtime
+	 * exception be thrown.
+	 * 
+	 * @param methodName
+	 *            A String with the method name
+	 * @param callNumber
+	 *            An int with the order number of the call, starting on 0
+	 * @param parameterName
+	 *            A String with the parameter name to get the value for
+	 * @return An Object with the recorded value
+	 */
+	public Object getParameterForMethodAndCallNumberAndParameter(String methodName, int callNumber,
+			String parameterName) {
 		String messageEnd = createNotFoundMessageForMethodNameAndCallNumberAndParameterName(
 				methodName, callNumber, parameterName);
 
