@@ -45,7 +45,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testReturnValueForThisMethod() throws Exception {
+	public void testReturnValueForThisMethod() {
 		String expectedReturnValue = "returnValue";
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("testReturnValueForThisMethod", returnValues, parameterValues);
@@ -53,11 +53,10 @@ public class MethodReturnValuesTest {
 		Object returnValue = MRV.getReturnValue(parameterValues);
 
 		assertEquals(returnValue, expectedReturnValue);
-
 	}
 
 	@Test
-	public void testReturnOtherValueForThisMethod() throws Exception {
+	public void testReturnOtherValueForThisMethod() {
 		String expectedReturnValue = "otherValue";
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("testReturnOtherValueForThisMethod", returnValues, parameterValues);
@@ -65,13 +64,11 @@ public class MethodReturnValuesTest {
 		Object returnValue = MRV.getReturnValue(parameterValues);
 
 		assertEquals(returnValue, expectedReturnValue);
-
 	}
 
 	@Test
-	public void testReturnSeveralValueForThisMethod() throws Exception {
+	public void testReturnSeveralValueForThisMethod() {
 		returnValues = List.of("firstValue", "secondValue", "thirdValue");
-		// String expectedReturnValue = "otherValue";
 		MRV.setReturnValues("testReturnSeveralValueForThisMethod", returnValues, parameterValues);
 
 		Object firstValue = MRV.getReturnValue(parameterValues);
@@ -81,11 +78,10 @@ public class MethodReturnValuesTest {
 		assertEquals(firstValue, "firstValue");
 		assertEquals(secondValue, "secondValue");
 		assertEquals(thirdValue, "thirdValue");
-
 	}
 
 	@Test
-	public void testMethodNameNotFound() throws Exception {
+	public void testMethodNameNotFound() {
 		String expectedReturnValue = "otherValue";
 		returnValues = List.of(expectedReturnValue);
 
@@ -104,7 +100,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testParametersNotFound() throws Exception {
+	public void testParametersNotFound() {
 		String expectedReturnValue = "otherValue";
 		returnValues = List.of(expectedReturnValue);
 		MRV.setReturnValues("testParametersNotFound", returnValues, parameterValues);
@@ -122,7 +118,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testStringValues() throws Exception {
+	public void testStringValues() {
 		MRV.setReturnValues("testStringValues", List.of(1, 2, 3), "one", "two");
 
 		var return1 = MRV.getReturnValue("one", "two");
@@ -135,7 +131,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testIntValues() throws Exception {
+	public void testIntValues() {
 		MRV.setReturnValues("testIntValues", List.of(1, 2, 3), 1, 2);
 
 		var return1 = MRV.getReturnValue(1, 2);
@@ -148,7 +144,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testBoolanReturnValues() throws Exception {
+	public void testBoolanReturnValues() {
 		MRV.setReturnValues("testBoolanReturnValues", List.of(true, false, true), 1);
 
 		boolean return1 = (boolean) MRV.getReturnValue(1);
@@ -161,7 +157,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testNoParameterValues() throws Exception {
+	public void testNoParameterValues() {
 		MRV.setReturnValues("testNoParameterValues", List.of(1, 2, 3));
 
 		var return1 = MRV.getReturnValue();
@@ -169,7 +165,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testDifferentReturnValuesForDifferentParameterValues() throws Exception {
+	public void testDifferentReturnValuesForDifferentParameterValues() {
 		MRV.setReturnValues("testDifferentReturnValuesForDifferentParameterValues", List.of("one"),
 				"one");
 		MRV.setReturnValues("testDifferentReturnValuesForDifferentParameterValues", List.of("two"),
@@ -183,7 +179,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testDefaultReturnValues() throws Exception {
+	public void testDefaultReturnValues() {
 		MRV.setDefaultReturnValuesSupplier("testDefaultReturnValues", String::new);
 
 		var return1 = MRV.getReturnValue();
@@ -191,7 +187,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testDefaultReturnValuesWithSpy() throws Exception {
+	public void testDefaultReturnValuesWithSpy() {
 		MRV.setDefaultReturnValuesSupplier("testDefaultReturnValuesWithSpy", DummySpy::new);
 
 		var return1 = MRV.getReturnValue();
@@ -201,7 +197,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testDefaultWithOneSetSpecific() throws Exception {
+	public void testDefaultWithOneSetSpecific() {
 		Object toReturn1 = new Object();
 		MRV.setReturnValues("testDefaultWithOneSetSpecific", List.of(toReturn1), "one");
 		MRV.setDefaultReturnValuesSupplier("testDefaultWithOneSetSpecific", DummySpy::new);
@@ -214,7 +210,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testSpecificDefaultReturnValues() throws Exception {
+	public void testSpecificDefaultReturnValues() {
 		MRV.setSpecificReturnValuesSupplier("testSpecificDefaultReturnValues", DummySpy::new,
 				"one");
 
@@ -223,7 +219,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testReturnOrder() throws Exception {
+	public void testReturnOrder() {
 		Object toReturn1 = new Object();
 		MRV.setReturnValues("testReturnOrder", List.of(toReturn1), "one");
 		MRV.setSpecificReturnValuesSupplier("testReturnOrder", DummySpy::new, "one");
@@ -238,7 +234,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testThrowException() throws Exception {
+	public void testThrowException() {
 		RuntimeException returnException = new RuntimeException();
 		MRV.setThrowException("testThrowException", returnException, "one");
 		Exception caughtException = null;
@@ -253,7 +249,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testThrowOrder() throws Exception {
+	public void testThrowOrder() {
 		Object toReturn1 = new Object();
 		Object toReturn2 = new Object();
 		MRV.setReturnValues("testThrowOrder", List.of(toReturn1), "one");
@@ -280,7 +276,7 @@ public class MethodReturnValuesTest {
 	}
 
 	@Test
-	public void testAlwaysThrowException() throws Exception {
+	public void testAlwaysThrowException() {
 		RuntimeException returnException = new RuntimeException();
 		MRV.setAlwaysThrowException("testAlwaysThrowException", returnException);
 		Exception caughtException = null;
